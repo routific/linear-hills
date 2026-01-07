@@ -156,19 +156,19 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
 
   return (
     <div className="w-full">
-      <div className="flex gap-6 items-start justify-between">
+      <div className="flex items-start gap-6">
         {/* Left Parking Lot - Backlog/Todo */}
-        <div className="flex-shrink-0" style={{ width: "320px" }}>
-          <ParkingLot
-            title="Not Started"
-            issues={backlogIssues}
-            emptyMessage="No backlog items"
-          />
-        </div>
+        <ParkingLot
+          title="Not Started"
+          issues={backlogIssues}
+          emptyMessage="No backlog items"
+          storageKey={`parking-lot-left-${projectId}`}
+          side="left"
+        />
 
         {/* Center - Hill Chart */}
-        <div className="flex-1 min-w-0 overflow-x-auto">
-          <div className="bg-card/30 border border-border/30 rounded-2xl p-6 backdrop-blur-sm">
+        <div className="min-w-0 flex-1 overflow-x-auto">
+          <div className="rounded-2xl border border-border/30 bg-card/30 p-6 backdrop-blur-sm">
             <svg
               ref={svgRef}
               width={svgWidth}
@@ -197,61 +197,61 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
                   Making it happen
                 </text>
 
-              <GridLines width={chartWidth} height={chartHeight} />
-              <HillCurve width={chartWidth} height={chartHeight} />
+                <GridLines width={chartWidth} height={chartHeight} />
+                <HillCurve width={chartWidth} height={chartHeight} />
 
-              {positionedIssues.map(({ issue, position }) => (
-                <g
-                  key={issue.id}
-                  onMouseDown={() => handleDragStart(issue.id)}
-                  style={{ cursor: "move" }}
+                {positionedIssues.map(({ issue, position }) => (
+                  <g
+                    key={issue.id}
+                    onMouseDown={() => handleDragStart(issue.id)}
+                    style={{ cursor: "move" }}
+                  >
+                    <IssueCard
+                      issue={issue}
+                      position={position}
+                      chartWidth={chartWidth}
+                      chartHeight={chartHeight}
+                      isDragging={draggingId === issue.id}
+                    />
+                  </g>
+                ))}
+
+                <text
+                  x={0}
+                  y={chartHeight + 40}
+                  className="text-xs fill-muted-foreground"
                 >
-                  <IssueCard
-                    issue={issue}
-                    position={position}
-                    chartWidth={chartWidth}
-                    chartHeight={chartHeight}
-                    isDragging={draggingId === issue.id}
-                  />
-                </g>
-              ))}
-
-              <text
-                x={0}
-                y={chartHeight + 40}
-                className="text-xs fill-muted-foreground"
-              >
-                0%
-              </text>
-              <text
-                x={chartWidth / 2}
-                y={chartHeight + 40}
-                textAnchor="middle"
-                className="text-xs fill-muted-foreground"
-              >
-                50%
-              </text>
-              <text
-                x={chartWidth}
-                y={chartHeight + 40}
-                textAnchor="end"
-                className="text-xs fill-muted-foreground"
-              >
-                100%
-              </text>
-            </g>
-          </svg>
+                  0%
+                </text>
+                <text
+                  x={chartWidth / 2}
+                  y={chartHeight + 40}
+                  textAnchor="middle"
+                  className="text-xs fill-muted-foreground"
+                >
+                  50%
+                </text>
+                <text
+                  x={chartWidth}
+                  y={chartHeight + 40}
+                  textAnchor="end"
+                  className="text-xs fill-muted-foreground"
+                >
+                  100%
+                </text>
+              </g>
+            </svg>
           </div>
         </div>
 
         {/* Right Completion Area - Done */}
-        <div className="flex-shrink-0" style={{ width: "320px" }}>
-          <ParkingLot
-            title="Completed"
-            issues={doneIssues}
-            emptyMessage="No completed items"
-          />
-        </div>
+        <ParkingLot
+          title="Completed"
+          issues={doneIssues}
+          emptyMessage="No completed items"
+          storageKey={`parking-lot-right-${projectId}`}
+          side="right"
+        />
       </div>
     </div>
   );
