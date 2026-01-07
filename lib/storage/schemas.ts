@@ -22,10 +22,18 @@ export const IssuePositionSchema = z.object({
   notes: z.string().optional(),
 });
 
+export const ParkingLotOrderSchema = z.object({
+  projectId: z.string().uuid(),
+  side: z.enum(["left", "right"]),
+  issueIds: z.array(z.string()),
+  lastUpdated: z.string(),
+});
+
 export const STORAGE_KEYS = {
   API_KEY: "linear_api_key",
   PROJECTS: "projects",
   ISSUE_POSITIONS: "issue_positions",
+  PARKING_LOT_ORDER: "parking_lot_order",
   LAST_SYNC: "last_sync",
 } as const;
 

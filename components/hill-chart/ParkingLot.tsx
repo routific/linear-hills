@@ -1,8 +1,24 @@
-import { ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
-import { SubtaskProgress } from "@/components/ui/subtask-progress";
-import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { SortableIssueCard } from "./SortableIssueCard";
 import type { LinearIssue } from "@/types";
 import { cn } from "@/lib/utils/cn";
+import { useAppStore } from "@/lib/store/appStore";
 
 interface ParkingLotProps {
   title: string;
@@ -10,14 +26,62 @@ interface ParkingLotProps {
   emptyMessage: string;
   storageKey: string;
   side: "left" | "right";
+  projectId: string;
 }
 
 const COLLAPSED_WIDTH = 48;
 const EXPANDED_WIDTH = 320;
 
-export function ParkingLot({ title, issues, emptyMessage, storageKey, side }: ParkingLotProps) {
+export function ParkingLot({ title, issues, emptyMessage, storageKey, side, projectId }: ParkingLotProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const hasInitialized = useRef(false);
+
+  const parkingLotOrders = useAppStore((state) => state.parkingLotOrders);
+  const updateParkingLotOrder = useAppStore((state) => state.updateParkingLotOrder);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Sort issues based on saved order
+  const sortedIssues = useMemo(() => {
+    const orderKey = `${projectId}-${side}`;
+    const savedOrder = parkingLotOrders[orderKey];
+
+    if (!savedOrder || savedOrder.issueIds.length === 0) {
+      return issues;
+    }
+
+    // Create a map of issue IDs to their saved order index
+    const orderMap = new Map(
+      savedOrder.issueIds.map((id, index) => [id, index])
+    );
+
+    // Separate issues into ordered and new (not in saved order)
+    const orderedIssues: LinearIssue[] = [];
+    const newIssues: LinearIssue[] = [];
+
+    issues.forEach((issue) => {
+      if (orderMap.has(issue.id)) {
+        orderedIssues.push(issue);
+      } else {
+        newIssues.push(issue);
+      }
+    });
+
+    // Sort ordered issues by their saved position
+    orderedIssues.sort((a, b) => {
+      const aIndex = orderMap.get(a.id) ?? 0;
+      const bIndex = orderMap.get(b.id) ?? 0;
+      return aIndex - bIndex;
+    });
+
+    // Append new issues at the end
+    return [...orderedIssues, ...newIssues];
+  }, [issues, parkingLotOrders, projectId, side]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -40,6 +104,26 @@ export function ParkingLot({ title, issues, emptyMessage, storageKey, side }: Pa
     setIsCollapsed(!isCollapsed);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = sortedIssues.findIndex((issue) => issue.id === active.id);
+    const newIndex = sortedIssues.findIndex((issue) => issue.id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const reorderedIssues = arrayMove(sortedIssues, oldIndex, newIndex);
+      updateParkingLotOrder(
+        projectId,
+        side,
+        reorderedIssues.map((issue) => issue.id)
+      );
+    }
+  };
+
   const CollapseIcon = isCollapsed
     ? side === "left"
       ? ChevronRight
@@ -48,7 +132,7 @@ export function ParkingLot({ title, issues, emptyMessage, storageKey, side }: Pa
       ? ChevronLeft
       : ChevronRight;
 
-  const issuesLabel = `${issues.length} ${issues.length === 1 ? "issue" : "issues"}`;
+  const issuesLabel = `${sortedIssues.length} ${sortedIssues.length === 1 ? "issue" : "issues"}`;
 
   return (
     <div
@@ -97,7 +181,7 @@ export function ParkingLot({ title, issues, emptyMessage, storageKey, side }: Pa
         )}
         style={{ maxHeight: "600px" }}
       >
-        {issues.length === 0 ? (
+        {sortedIssues.length === 0 ? (
           <div className="py-8 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted/30">
               <div className="h-6 w-6 rounded-full bg-muted/50" />
@@ -107,54 +191,22 @@ export function ParkingLot({ title, issues, emptyMessage, storageKey, side }: Pa
             </p>
           </div>
         ) : (
-          issues.map((issue) => (
-            <div
-              key={issue.id}
-              className="group rounded-xl border border-border/50 bg-card/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5"
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sortedIssues.map((issue) => issue.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className="truncate text-xs font-semibold text-foreground transition-colors group-hover:text-primary">
-                    {issue.identifier}
-                  </span>
-                  <a
-                    href={issue.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
-                  </a>
-                </div>
-                {issue.assignee && (
-                  <div className="flex-shrink-0">
-                    {issue.assignee.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={issue.assignee.avatarUrl}
-                        alt={issue.assignee.name}
-                        className="h-5 w-5 rounded-full ring-2 ring-primary/20"
-                      />
-                    ) : (
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-[10px] font-semibold text-primary-foreground ring-2 ring-primary/20">
-                        {issue.assignee.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                )}
+              <div className="space-y-3">
+                {sortedIssues.map((issue) => (
+                  <SortableIssueCard key={issue.id} issue={issue} />
+                ))}
               </div>
-
-              <p className="mb-2 line-clamp-2 text-xs leading-snug text-muted-foreground">
-                {issue.title}
-              </p>
-
-              <SubtaskProgress
-                completed={issue.completedSubtaskCount}
-                total={issue.subtaskCount}
-                size={14}
-              />
-            </div>
-          ))
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>

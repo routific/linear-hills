@@ -164,6 +164,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
           emptyMessage="No backlog items"
           storageKey={`parking-lot-left-${projectId}`}
           side="left"
+          projectId={projectId}
         />
 
         {/* Center - Hill Chart */}
@@ -251,6 +252,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
           emptyMessage="No completed items"
           storageKey={`parking-lot-right-${projectId}`}
           side="right"
+          projectId={projectId}
         />
       </div>
     </div>

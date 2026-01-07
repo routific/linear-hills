@@ -33,3 +33,10 @@ export interface IssuePosition {
   lastUpdated: string;
   notes?: string;
 }
+
+export interface ParkingLotOrder {
+  projectId: string;
+  side: "left" | "right";
+  issueIds: string[];
+  lastUpdated: string;
+}
