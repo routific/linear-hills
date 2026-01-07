@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,48 +25,51 @@ import { useLinearProjects } from "@/lib/hooks/useLinearProjects";
 import { useAppStore } from "@/lib/store/appStore";
 import type { Project } from "@/types";
 
-interface CreateProjectDialogProps {
+interface EditProjectDialogProps {
+  project: Project;
   children: React.ReactNode;
 }
 
-export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
+export function EditProjectDialog({ project, children }: EditProjectDialogProps) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [selectedTeamId, setSelectedTeamId] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [labelFilter, setLabelFilter] = useState("");
+  const [name, setName] = useState(project.name);
+  const [description, setDescription] = useState(project.description || "");
+  const [selectedTeamId, setSelectedTeamId] = useState(project.linearTeamId);
+  const [selectedProjectId, setSelectedProjectId] = useState(project.linearProjectId || "");
+  const [labelFilter, setLabelFilter] = useState(project.labelFilter);
 
   const { data: teams, isLoading: isLoadingTeams } = useLinearTeams(open);
   const { data: projects, isLoading: isLoadingProjects } = useLinearProjects(
     selectedTeamId,
     open && !!selectedTeamId
   );
-  const addProject = useAppStore((state) => state.addProject);
+  const updateProject = useAppStore((state) => state.updateProject);
 
-  const handleCreate = () => {
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      setName(project.name);
+      setDescription(project.description || "");
+      setSelectedTeamId(project.linearTeamId);
+      setSelectedProjectId(project.linearProjectId || "");
+      setLabelFilter(project.labelFilter);
+    }
+  }, [open, project]);
+
+  const handleSave = () => {
     if (!name.trim() || !selectedTeamId || !selectedProjectId || !labelFilter.trim()) {
       return;
     }
 
-    const project: Project = {
-      id: uuidv4(),
+    updateProject(project.id, {
       name: name.trim(),
       description: description.trim() || undefined,
       linearTeamId: selectedTeamId,
       linearProjectId: selectedProjectId,
       labelFilter: labelFilter.trim(),
-      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    };
+    });
 
-    addProject(project);
-
-    setName("");
-    setDescription("");
-    setSelectedTeamId("");
-    setSelectedProjectId("");
-    setLabelFilter("");
     setOpen(false);
   };
 
@@ -78,17 +80,17 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
+          <DialogTitle>Edit Project</DialogTitle>
           <DialogDescription>
-            Create a new hill chart for Linear issues with a specific label
+            Update your hill chart project settings
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Project Name</Label>
+            <Label htmlFor="edit-name">Project Name</Label>
             <Input
-              id="name"
+              id="edit-name"
               placeholder="Q1 2024 Features"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -96,9 +98,9 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="description">Description (optional)</Label>
+            <Label htmlFor="edit-description">Description (optional)</Label>
             <Input
-              id="description"
+              id="edit-description"
               placeholder="Track progress of Q1 features"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -106,7 +108,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="team">Linear Team</Label>
+            <Label htmlFor="edit-team">Linear Team</Label>
             <Select
               value={selectedTeamId}
               onValueChange={(value) => {
@@ -114,7 +116,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                 setSelectedProjectId(""); // Reset project when team changes
               }}
             >
-              <SelectTrigger id="team">
+              <SelectTrigger id="edit-team">
                 <SelectValue placeholder="Select a team" />
               </SelectTrigger>
               <SelectContent>
@@ -138,13 +140,13 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="project">Linear Project</Label>
+            <Label htmlFor="edit-project">Linear Project</Label>
             <Select
               value={selectedProjectId}
               onValueChange={setSelectedProjectId}
               disabled={!selectedTeamId}
             >
-              <SelectTrigger id="project">
+              <SelectTrigger id="edit-project">
                 <SelectValue placeholder="Select a project" />
               </SelectTrigger>
               <SelectContent>
@@ -153,9 +155,9 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                     Loading projects...
                   </SelectItem>
                 )}
-                {projects?.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
+                {projects?.map((proj) => (
+                  <SelectItem key={proj.id} value={proj.id}>
+                    {proj.name}
                   </SelectItem>
                 ))}
                 {!isLoadingProjects && projects?.length === 0 && selectedTeamId && (
@@ -171,9 +173,9 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="label">Label Filter</Label>
+            <Label htmlFor="edit-label">Label Filter</Label>
             <Input
-              id="label"
+              id="edit-label"
               placeholder="hill-chart"
               value={labelFilter}
               onChange={(e) => setLabelFilter(e.target.value)}
@@ -192,8 +194,8 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
           >
             Cancel
           </Button>
-          <Button type="button" onClick={handleCreate} disabled={!isValid}>
-            Create Project
+          <Button type="button" onClick={handleSave} disabled={!isValid}>
+            Save Changes
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -27,6 +27,7 @@ export default function ProjectPage({
 
   const { refetch, isFetching } = useLinearIssues({
     teamId: project?.linearTeamId || "",
+    projectId: project?.linearProjectId,
     labelFilter: project?.labelFilter || "",
     enabled: !!project,
   });
@@ -98,19 +99,11 @@ export default function ProjectPage({
                 {project.description}
               </p>
             )}
-            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-              <span className="px-2 py-1 bg-muted/50 rounded-md">
-                Team: {project.linearTeamId}
-              </span>
-              <span className="px-2 py-1 bg-muted/50 rounded-md font-mono">
-                {project.labelFilter}
-              </span>
-              {lastSync && (
-                <span>
-                  Last synced {formatDistanceToNow(new Date(lastSync))} ago
-                </span>
-              )}
-            </div>
+            {lastSync && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Last synced {formatDistanceToNow(new Date(lastSync))} ago
+              </p>
+            )}
           </div>
         </div>
       </header>
@@ -119,6 +112,7 @@ export default function ProjectPage({
         <HillChart
           projectId={project.id}
           teamId={project.linearTeamId}
+          linearProjectId={project.linearProjectId}
           labelFilter={project.labelFilter}
         />
 

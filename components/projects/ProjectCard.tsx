@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EditProjectDialog } from "./EditProjectDialog";
 import { useAppStore } from "@/lib/store/appStore";
 import type { Project } from "@/types";
 import { useState } from "react";
@@ -44,14 +45,26 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <CardHeader className="relative">
         <div className="flex items-start justify-between">
           <CardTitle className="group-hover:text-primary transition-colors">{project.name}</CardTitle>
-          <Button
-            variant={showConfirm ? "destructive" : "ghost"}
-            size="sm"
-            className="h-8 w-8 p-0 -mt-1 -mr-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <EditProjectDialog project={project}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 -mt-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </EditProjectDialog>
+            <Button
+              variant={showConfirm ? "destructive" : "ghost"}
+              size="sm"
+              className="h-8 w-8 p-0 -mt-1 -mr-1"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <CardDescription className="line-clamp-2">
           {project.description || `Filter: ${project.labelFilter}`}

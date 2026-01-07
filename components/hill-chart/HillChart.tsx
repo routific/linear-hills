@@ -13,6 +13,7 @@ import type { LinearIssue, IssuePosition } from "@/types";
 interface HillChartProps {
   projectId: string;
   teamId: string;
+  linearProjectId?: string;
   labelFilter: string;
 }
 
@@ -21,9 +22,10 @@ interface PositionedIssue {
   position: IssuePosition;
 }
 
-export function HillChart({ projectId, teamId, labelFilter }: HillChartProps) {
+export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: HillChartProps) {
   const { data: issues, isLoading, error } = useLinearIssues({
     teamId,
+    projectId: linearProjectId,
     labelFilter,
   });
 

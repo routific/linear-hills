@@ -4,26 +4,33 @@ import type { LinearIssue } from "@/types";
 
 interface UseLinearIssuesOptions {
   teamId: string;
+  projectId?: string;
   labelFilter: string;
   enabled?: boolean;
 }
 
 export function useLinearIssues({
   teamId,
+  projectId,
   labelFilter,
   enabled = true,
 }: UseLinearIssuesOptions) {
   return useQuery({
-    queryKey: ["linear-issues", teamId, labelFilter],
+    queryKey: ["linear-issues", teamId, projectId, labelFilter],
     queryFn: async (): Promise<LinearIssue[]> => {
       const client = getLinearClient();
       const team = await client.team(teamId);
 
-      const issuesConnection = await team.issues({
-        filter: {
-          labels: { name: { eq: labelFilter } },
-        },
-      });
+      const filter: any = {
+        labels: { name: { eq: labelFilter } },
+      };
+
+      // Add project filter if provided
+      if (projectId) {
+        filter.project = { id: { eq: projectId } };
+      }
+
+      const issuesConnection = await team.issues({ filter });
 
       const issues = issuesConnection.nodes;
 
