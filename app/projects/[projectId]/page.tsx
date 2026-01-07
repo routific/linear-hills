@@ -115,20 +115,6 @@ export default function ProjectPage({
           linearProjectId={project.linearProjectId}
           labelFilter={project.labelFilter}
         />
-
-        <div className="mt-12 text-center text-sm text-muted-foreground space-y-2 max-w-2xl mx-auto">
-          <p className="text-base">Drag issues horizontally to update their progress on the hill</p>
-          <div className="flex items-center justify-center gap-8 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary/50" />
-              <span>0-50%: Figuring things out</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary" />
-              <span>50-100%: Making it happen</span>
-            </div>
-          </div>
-        </div>
       </main>
     </div>
   );
