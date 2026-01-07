@@ -50,12 +50,17 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
       return;
     }
 
+    const team = teams?.find((t) => t.id === selectedTeamId);
+    const linearProject = projects?.find((p) => p.id === selectedProjectId);
+
     const project: Project = {
       id: uuidv4(),
       name: name.trim(),
       description: description.trim() || undefined,
       linearTeamId: selectedTeamId,
+      linearTeamName: team?.name,
       linearProjectId: selectedProjectId,
+      linearProjectName: linearProject?.name,
       labelFilter: labelFilter.trim(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

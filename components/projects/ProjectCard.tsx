@@ -21,12 +21,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const deleteProject = useAppStore((state) => state.deleteProject);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Fetch team and project names
-  const { data: teams } = useLinearTeams(true);
-  const { data: projects } = useLinearProjects(project.linearTeamId, true);
+  // Fetch team and project names as fallback for older projects
+  const { data: teams } = useLinearTeams(!project.linearTeamName);
+  const { data: projects } = useLinearProjects(project.linearTeamId, !project.linearProjectName);
 
-  const teamName = teams?.find((t) => t.id === project.linearTeamId)?.name || project.linearTeamId;
-  const projectName = projects?.find((p) => p.id === project.linearProjectId)?.name || project.linearProjectId;
+  const teamName = project.linearTeamName || 
+                   teams?.find((t) => t.id === project.linearTeamId)?.name || 
+                   project.linearTeamId;
+                   
+  const projectName = project.linearProjectName || 
+                      projects?.find((p) => p.id === project.linearProjectId)?.name || 
+                      project.linearProjectId;
 
   const handleClick = () => {
     router.push(`/projects/${project.id}`);

@@ -3,7 +3,9 @@ export interface Project {
   name: string;
   description?: string;
   linearTeamId: string;
+  linearTeamName?: string;
   linearProjectId?: string;
+  linearProjectName?: string;
   labelFilter: string;
   createdAt: string;
   updatedAt: string;
