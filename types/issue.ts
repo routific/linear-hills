@@ -22,6 +22,8 @@ export interface LinearIssue {
   url: string;
   createdAt: string;
   updatedAt: string;
+  subtaskCount: number;
+  completedSubtaskCount: number;
 }
 
 export interface IssuePosition {

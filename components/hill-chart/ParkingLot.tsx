@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import { SubtaskProgress } from "@/components/ui/subtask-progress";
 import type { LinearIssue } from "@/types";
 
 interface ParkingLotProps {
@@ -65,9 +66,15 @@ export function ParkingLot({ title, issues, emptyMessage }: ParkingLotProps) {
                 )}
               </div>
 
-              <p className="text-xs text-muted-foreground leading-snug line-clamp-2">
+              <p className="text-xs text-muted-foreground leading-snug line-clamp-2 mb-2">
                 {issue.title}
               </p>
+
+              <SubtaskProgress
+                completed={issue.completedSubtaskCount}
+                total={issue.subtaskCount}
+                size={14}
+              />
             </div>
           ))
         )}

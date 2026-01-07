@@ -1,5 +1,6 @@
 import { hillPositionToScreen } from "@/lib/utils/hillMath";
 import { ExternalLink } from "lucide-react";
+import { SubtaskProgress } from "@/components/ui/subtask-progress";
 import type { LinearIssue, IssuePosition } from "@/types";
 
 interface IssueCardProps {
@@ -24,7 +25,7 @@ export function IssueCard({
   );
 
   const cardWidth = 200;
-  const cardHeight = 90;
+  const cardHeight = 100;
   const cardX = coords.x - cardWidth / 2;
   const cardY = coords.y - cardHeight - 10;
 
@@ -73,9 +74,14 @@ export function IssueCard({
               </div>
             )}
           </div>
-          <p className="text-xs text-muted-foreground line-clamp-2 leading-snug">
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-snug mb-2">
             {issue.title}
           </p>
+          <SubtaskProgress
+            completed={issue.completedSubtaskCount}
+            total={issue.subtaskCount}
+            size={14}
+          />
         </div>
       </foreignObject>
 

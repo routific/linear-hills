@@ -33,6 +33,29 @@ export function useLinearIssues({
           const assignee = await issue.assignee;
           const labelsConnection = await issue.labels();
 
+          // Fetch child issues (subtasks)
+          let subtaskCount = 0;
+          let completedSubtaskCount = 0;
+
+          try {
+            const childrenConnection = await issue.children();
+            const children = childrenConnection?.nodes || [];
+            subtaskCount = children.length;
+
+            if (children.length > 0) {
+              const completedStatuses = await Promise.all(
+                children.map(async (child) => {
+                  const childState = await child.state;
+                  return childState?.type === "completed" || childState?.type === "canceled";
+                })
+              );
+
+              completedSubtaskCount = completedStatuses.filter(Boolean).length;
+            }
+          } catch (error) {
+            console.error("Error fetching children for issue:", issue.identifier, error);
+          }
+
           return {
             id: issue.id,
             identifier: issue.identifier,
@@ -59,6 +82,8 @@ export function useLinearIssues({
             url: issue.url,
             createdAt: issue.createdAt.toISOString(),
             updatedAt: issue.updatedAt.toISOString(),
+            subtaskCount: subtaskCount,
+            completedSubtaskCount: completedSubtaskCount,
           };
         })
       );
