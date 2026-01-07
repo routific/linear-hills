@@ -156,7 +156,7 @@ export function HillChart({ projectId, teamId, labelFilter }: HillChartProps) {
     <div className="w-full">
       <div className="flex gap-6 items-start justify-between">
         {/* Left Parking Lot - Backlog/Todo */}
-        <div className="flex-shrink-0" style={{ width: "280px" }}>
+        <div className="flex-shrink-0" style={{ width: "320px" }}>
           <ParkingLot
             title="Not Started"
             issues={backlogIssues}
@@ -243,7 +243,7 @@ export function HillChart({ projectId, teamId, labelFilter }: HillChartProps) {
         </div>
 
         {/* Right Completion Area - Done */}
-        <div className="flex-shrink-0" style={{ width: "280px" }}>
+        <div className="flex-shrink-0" style={{ width: "320px" }}>
           <ParkingLot
             title="Completed"
             issues={doneIssues}
