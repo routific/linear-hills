@@ -73,76 +73,88 @@ export default function SetupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome to Linear Hill Charts</CardTitle>
-          <CardDescription>
-            Enter your Linear API key to get started
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="apiKey" className="text-sm font-medium">
-              Linear API Key
-            </label>
-            <Input
-              id="apiKey"
-              type="password"
-              placeholder="lin_api_..."
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleTestConnection();
-                }
-              }}
-            />
-            <p className="text-xs text-muted-foreground">
-              Get your API key from{" "}
-              <a
-                href="https://linear.app/settings/api"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-foreground"
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+            Linear Hill Charts
+          </h1>
+          <p className="text-muted-foreground">
+            Visualize your Linear issues as interactive hill charts
+          </p>
+        </div>
+
+        <Card className="border-border/50 bg-card/60 backdrop-blur-sm shadow-xl">
+          <CardHeader>
+            <CardTitle>Welcome</CardTitle>
+            <CardDescription>
+              Enter your Linear API key to get started
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="apiKey" className="text-sm font-medium">
+                Linear API Key
+              </label>
+              <Input
+                id="apiKey"
+                type="password"
+                placeholder="lin_api_..."
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleTestConnection();
+                  }
+                }}
+                className="bg-background/50 border-border/50"
+              />
+              <p className="text-xs text-muted-foreground">
+                Get your API key from{" "}
+                <a
+                  href="https://linear.app/settings/api"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Linear Settings
+                </a>
+              </p>
+            </div>
+
+            {connectionError && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                {connectionError}
+              </div>
+            )}
+
+            {connectionSuccess && teams && (
+              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-primary text-sm">
+                Connected successfully! Found {teams.length} team
+                {teams.length !== 1 ? "s" : ""}:{" "}
+                {teams.map((t) => t.name).join(", ")}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleTestConnection}
+                disabled={isTestingConnection || !apiKey.trim()}
+                variant="outline"
+                className="flex-1 border-border/50"
               >
-                Linear Settings
-              </a>
-            </p>
-          </div>
-
-          {connectionError && (
-            <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-              {connectionError}
+                {isTestingConnection ? "Testing..." : "Test Connection"}
+              </Button>
+              <Button
+                onClick={handleContinue}
+                disabled={!connectionSuccess}
+                className="flex-1 shadow-lg shadow-primary/20"
+              >
+                Continue
+              </Button>
             </div>
-          )}
-
-          {connectionSuccess && teams && (
-            <div className="p-3 rounded-md bg-green-500/10 text-green-700 dark:text-green-400 text-sm">
-              Connected successfully! Found {teams.length} team
-              {teams.length !== 1 ? "s" : ""}:{" "}
-              {teams.map((t) => t.name).join(", ")}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <Button
-              onClick={handleTestConnection}
-              disabled={isTestingConnection || !apiKey.trim()}
-              variant="outline"
-              className="flex-1"
-            >
-              {isTestingConnection ? "Testing..." : "Test Connection"}
-            </Button>
-            <Button
-              onClick={handleContinue}
-              disabled={!connectionSuccess}
-              className="flex-1"
-            >
-              Continue
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

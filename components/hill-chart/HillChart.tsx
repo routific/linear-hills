@@ -166,33 +166,34 @@ export function HillChart({ projectId, teamId, labelFilter }: HillChartProps) {
 
         {/* Center - Hill Chart */}
         <div className="flex-1 min-w-0 overflow-x-auto">
-          <svg
-            ref={svgRef}
-            width={svgWidth}
-            height={svgHeight}
-            className="mx-auto"
-            style={{ minWidth: svgWidth }}
-            onMouseMove={handleDragMove}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
-          >
-            <g transform={`translate(${padding.left}, ${padding.top})`}>
-              <text
-                x={chartWidth / 4}
-                y={-40}
-                textAnchor="middle"
-                className="text-sm font-medium fill-muted-foreground"
-              >
-                Figuring it out
-              </text>
-              <text
-                x={(chartWidth * 3) / 4}
-                y={-40}
-                textAnchor="middle"
-                className="text-sm font-medium fill-muted-foreground"
-              >
-                Making it happen
-              </text>
+          <div className="bg-card/30 border border-border/30 rounded-2xl p-6 backdrop-blur-sm">
+            <svg
+              ref={svgRef}
+              width={svgWidth}
+              height={svgHeight}
+              className="mx-auto"
+              style={{ minWidth: svgWidth }}
+              onMouseMove={handleDragMove}
+              onMouseUp={handleDragEnd}
+              onMouseLeave={handleDragEnd}
+            >
+              <g transform={`translate(${padding.left}, ${padding.top})`}>
+                <text
+                  x={chartWidth / 4}
+                  y={-40}
+                  textAnchor="middle"
+                  className="text-sm font-semibold fill-foreground/80"
+                >
+                  Figuring it out
+                </text>
+                <text
+                  x={(chartWidth * 3) / 4}
+                  y={-40}
+                  textAnchor="middle"
+                  className="text-sm font-semibold fill-foreground/80"
+                >
+                  Making it happen
+                </text>
 
               <GridLines width={chartWidth} height={chartHeight} />
               <HillCurve width={chartWidth} height={chartHeight} />
@@ -238,6 +239,7 @@ export function HillChart({ projectId, teamId, labelFilter }: HillChartProps) {
               </text>
             </g>
           </svg>
+          </div>
         </div>
 
         {/* Right Completion Area - Done */}

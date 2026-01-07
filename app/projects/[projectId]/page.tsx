@@ -63,13 +63,14 @@ export default function ProjectPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
+      <header className="border-b border-border/50 backdrop-blur-sm bg-background/95 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between mb-3">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.push("/projects")}
+              className="hover:bg-muted/50"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Projects
@@ -79,6 +80,7 @@ export default function ProjectPage({
               size="sm"
               onClick={handleSync}
               disabled={isFetching}
+              className="border-border/50 shadow-sm"
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
@@ -88,15 +90,21 @@ export default function ProjectPage({
           </div>
 
           <div>
-            <h1 className="text-2xl font-bold">{project.name}</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              {project.name}
+            </h1>
             {project.description && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mt-2">
                 {project.description}
               </p>
             )}
-            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-              <span>Team: {project.linearTeamId}</span>
-              <span>Label: {project.labelFilter}</span>
+            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+              <span className="px-2 py-1 bg-muted/50 rounded-md">
+                Team: {project.linearTeamId}
+              </span>
+              <span className="px-2 py-1 bg-muted/50 rounded-md font-mono">
+                {project.labelFilter}
+              </span>
               {lastSync && (
                 <span>
                   Last synced {formatDistanceToNow(new Date(lastSync))} ago
@@ -114,12 +122,18 @@ export default function ProjectPage({
           labelFilter={project.labelFilter}
         />
 
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Drag issues horizontally to update their progress on the hill</p>
-          <p className="mt-1">
-            Left side (0-50%): Figuring things out • Right side (50-100%):
-            Making it happen
-          </p>
+        <div className="mt-12 text-center text-sm text-muted-foreground space-y-2 max-w-2xl mx-auto">
+          <p className="text-base">Drag issues horizontally to update their progress on the hill</p>
+          <div className="flex items-center justify-center gap-8 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary/50" />
+              <span>0-50%: Figuring things out</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary" />
+              <span>50-100%: Making it happen</span>
+            </div>
+          </div>
         </div>
       </main>
     </div>

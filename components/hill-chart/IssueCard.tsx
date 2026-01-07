@@ -51,9 +51,9 @@ export function IssueCard({
             }
           }}
         >
-          <div className="w-full h-full p-3 bg-card border border-border rounded-lg shadow-md hover:shadow-lg transition-shadow hover:border-primary/50">
+          <div className="w-full h-full p-3 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-lg hover:shadow-xl hover:shadow-primary/10 transition-all hover:border-primary/50 hover:bg-card/90 group">
             <div className="flex items-start justify-between mb-1">
-              <span className="text-sm font-semibold text-foreground truncate">
+              <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                 {issue.identifier}
               </span>
               {issue.assignee && (
@@ -63,10 +63,10 @@ export function IssueCard({
                     <img
                       src={issue.assignee.avatarUrl}
                       alt={issue.assignee.name}
-                      className="w-6 h-6 rounded-full"
+                      className="w-6 h-6 rounded-full ring-2 ring-primary/20"
                     />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center text-xs font-semibold ring-2 ring-primary/20">
                       {issue.assignee.name.charAt(0).toUpperCase()}
                     </div>
                   )}

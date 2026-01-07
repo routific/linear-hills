@@ -9,15 +9,23 @@ interface ParkingLotProps {
 export function ParkingLot({ title, issues, emptyMessage }: ParkingLotProps) {
   return (
     <div className="flex flex-col h-full">
-      <h3 className="text-sm font-semibold mb-3 text-center sticky top-0 bg-background z-10 pb-2 border-b">
+      <h3 className="text-sm font-semibold mb-4 text-center sticky top-0 bg-background/95 backdrop-blur-sm z-10 pb-3 border-b border-primary/20">
         {title}
+        <span className="block text-xs font-normal text-muted-foreground mt-1">
+          {issues.length} {issues.length === 1 ? 'issue' : 'issues'}
+        </span>
       </h3>
 
       <div className="flex-1 space-y-3 overflow-y-auto max-h-[600px] pr-2">
         {issues.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">
-            {emptyMessage}
-          </p>
+          <div className="text-center py-8">
+            <div className="w-12 h-12 rounded-full bg-muted/30 mx-auto mb-3 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-muted/50" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {emptyMessage}
+            </p>
+          </div>
         ) : (
           issues.map((issue) => (
             <a
@@ -25,10 +33,10 @@ export function ParkingLot({ title, issues, emptyMessage }: ParkingLotProps) {
               href={issue.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block p-3 bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-all hover:border-primary/50"
+              className="block p-3 bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl shadow-sm hover:shadow-lg hover:shadow-primary/5 transition-all hover:border-primary/50 hover:bg-card/80 group"
             >
               <div className="flex items-start justify-between mb-2">
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                   {issue.identifier}
                 </span>
                 {issue.assignee && (
@@ -38,10 +46,10 @@ export function ParkingLot({ title, issues, emptyMessage }: ParkingLotProps) {
                       <img
                         src={issue.assignee.avatarUrl}
                         alt={issue.assignee.name}
-                        className="w-6 h-6 rounded-full"
+                        className="w-6 h-6 rounded-full ring-2 ring-primary/20"
                       />
                     ) : (
-                      <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center text-xs font-semibold ring-2 ring-primary/20">
                         {issue.assignee.name.charAt(0).toUpperCase()}
                       </div>
                     )}
