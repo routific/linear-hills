@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -31,6 +31,12 @@ interface ParkingLotProps {
   onToggleCollapse?: () => void;
 }
 
+const KeyboardHint = ({ keys }: { keys: string }) => (
+  <kbd className="inline-flex items-center justify-center rounded border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-sm">
+    {keys}
+  </kbd>
+);
+
 const COLLAPSED_WIDTH = 48;
 const EXPANDED_WIDTH = 320;
 
@@ -44,8 +50,7 @@ export function ParkingLot({
   isCollapsed: externalCollapsed,
   onToggleCollapse
 }: ParkingLotProps) {
-  const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const hasInitialized = useRef(false);
+  const [internalCollapsed, setInternalCollapsed] = useState(true);
 
   // Use external state if provided, otherwise use internal state
   const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
@@ -97,23 +102,6 @@ export function ParkingLot({
     return [...orderedIssues, ...newIssues];
   }, [issues, parkingLotOrders, projectId, side]);
 
-  useEffect(() => {
-    // Only manage localStorage if using internal state
-    if (externalCollapsed !== undefined || typeof window === "undefined") {
-      return;
-    }
-
-    if (!hasInitialized.current) {
-      const saved = localStorage.getItem(storageKey);
-      if (saved !== null) {
-        setInternalCollapsed(JSON.parse(saved));
-      }
-      hasInitialized.current = true;
-      return;
-    }
-
-    localStorage.setItem(storageKey, JSON.stringify(internalCollapsed));
-  }, [internalCollapsed, storageKey, externalCollapsed]);
 
   const toggleCollapse = () => {
     if (onToggleCollapse) {
@@ -152,6 +140,7 @@ export function ParkingLot({
       : ChevronRight;
 
   const issuesLabel = `${sortedIssues.length} ${sortedIssues.length === 1 ? "issue" : "issues"}`;
+  const keyboardShortcut = side === "left" ? "[" : "]";
 
   return (
     <div
@@ -169,29 +158,42 @@ export function ParkingLot({
         className={cn(
           "group flex flex-col items-center gap-2 rounded-xl text-sm font-semibold transition-all duration-200",
           isCollapsed
-            ? "w-full flex-1 justify-center text-xs text-muted-foreground hover:bg-muted/20"
+            ? "w-full flex-1 justify-center text-xs text-muted-foreground hover:bg-muted/20 px-1"
             : " mb-4 bg-background/95 pb-3 pt-2 text-center hover:bg-muted/20"
         )}
         aria-expanded={!isCollapsed}
+        title={isCollapsed ? `${title} (${keyboardShortcut})` : undefined}
       >
         <CollapseIcon className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
         <span
           className={cn(
             "font-semibold text-foreground transition-colors duration-200",
-            isCollapsed ? "text-[10px] uppercase tracking-wide text-muted-foreground" : ""
+            isCollapsed ? "text-[10px] uppercase tracking-wide text-muted-foreground writing-mode-vertical-rl" : ""
           )}
+          style={isCollapsed ? { writingMode: 'vertical-rl', textOrientation: 'mixed' } : undefined}
         >
           {title}
         </span>
-        <span
-          className={cn(
-            "text-xs font-normal text-muted-foreground transition-opacity duration-200",
-            isCollapsed ? "text-[9px]" : "mt-1"
-          )}
-        >
-          {issuesLabel}
-        </span>
+        {!isCollapsed && (
+          <span className="text-xs font-normal text-muted-foreground mt-1">
+            {issuesLabel}
+          </span>
+        )}
+        {!isCollapsed && (
+          <div className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <KeyboardHint keys={keyboardShortcut} />
+          </div>
+        )}
       </button>
+
+      {isCollapsed && (
+        <div className="mt-auto mb-2 flex flex-col items-center gap-2">
+          <div className="text-[9px] text-muted-foreground font-medium">
+            {sortedIssues.length}
+          </div>
+          <KeyboardHint keys={keyboardShortcut} />
+        </div>
+      )}
 
       <div
         className={cn(

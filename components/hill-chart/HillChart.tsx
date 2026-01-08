@@ -56,8 +56,37 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
   const svgRef = useRef<SVGSVGElement>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [tempPositions, setTempPositions] = useState<Record<string, number>>({});
-  const [leftCollapsed, setLeftCollapsed] = useState<boolean | undefined>(undefined);
-  const [rightCollapsed, setRightCollapsed] = useState<boolean | undefined>(undefined);
+  const [leftCollapsed, setLeftCollapsed] = useState(true);
+  const [rightCollapsed, setRightCollapsed] = useState(true);
+
+  // Initialize from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const leftKey = `parking-lot-left-${projectId}`;
+    const rightKey = `parking-lot-right-${projectId}`;
+
+    const savedLeft = localStorage.getItem(leftKey);
+    const savedRight = localStorage.getItem(rightKey);
+
+    if (savedLeft !== null) {
+      setLeftCollapsed(JSON.parse(savedLeft));
+    }
+    if (savedRight !== null) {
+      setRightCollapsed(JSON.parse(savedRight));
+    }
+  }, [projectId]);
+
+  // Save to localStorage when state changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(`parking-lot-left-${projectId}`, JSON.stringify(leftCollapsed));
+  }, [leftCollapsed, projectId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(`parking-lot-right-${projectId}`, JSON.stringify(rightCollapsed));
+  }, [rightCollapsed, projectId]);
 
   // Keyboard shortcuts for toggling parking lots
   useEffect(() => {
