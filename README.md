@@ -15,7 +15,37 @@ Visualize your Linear issues as interactive hill charts. Track progress from "fi
 - **Real-time updates** - syncs with Linear every 5 minutes
 - **Token refresh** - automatic token renewal for uninterrupted access
 
-## Getting Started
+Note that this currently only works for single player mode as positions are stored on localStorage.
+
+### The Hill Metaphor
+
+- **Left side (0-50%)**: "Figuring it out"
+  - High uncertainty
+  - Exploration and discovery
+  - Understanding the problem
+
+- **Peak (50%)**: Maximum uncertainty
+  - Transition point
+  - Key decisions being made
+
+- **Right side (50-100%)**: "Making it happen"
+  - Decreasing uncertainty
+  - Execution mode
+  - Shipping and finishing
+
+### Using the Interface
+
+- **Drag horizontally** - Move issues along the hill to update their progress
+- **Color indicators** - Priority levels shown by colored dots
+  - Red: Urgent
+  - Orange: High
+  - Blue: Medium
+  - Gray: Low
+- **Sync button** - Manually refresh issues from Linear
+- **Auto-sync** - Issues automatically refresh every 5 minutes
+
+
+## Development Getting Started
 
 ### Prerequisites
 
@@ -90,32 +120,6 @@ Visualize your Linear issues as interactive hill charts. Track progress from "fi
 
 Hill charts are inspired by [Basecamp's hill charts](https://basecamp.com/features/hill-charts) and provide a visual way to track project progress:
 
-### The Hill Metaphor
-
-- **Left side (0-50%)**: "Figuring it out"
-  - High uncertainty
-  - Exploration and discovery
-  - Understanding the problem
-
-- **Peak (50%)**: Maximum uncertainty
-  - Transition point
-  - Key decisions being made
-
-- **Right side (50-100%)**: "Making it happen"
-  - Decreasing uncertainty
-  - Execution mode
-  - Shipping and finishing
-
-### Using the Interface
-
-- **Drag horizontally** - Move issues along the hill to update their progress
-- **Color indicators** - Priority levels shown by colored dots
-  - Red: Urgent
-  - Orange: High
-  - Blue: Medium
-  - Gray: Low
-- **Sync button** - Manually refresh issues from Linear
-- **Auto-sync** - Issues automatically refresh every 5 minutes
 
 ## Project Structure
 
@@ -176,15 +180,6 @@ Hill charts are inspired by [Basecamp's hill charts](https://basecamp.com/featur
 - **Projects**: Browser localStorage
 - **Issue Positions**: Browser localStorage
 - **Issue Metadata**: Fetched from Linear (not stored)
-
-### Browser Support
-
-Modern browsers with localStorage support:
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-
-## Development
 
 ### Available Scripts
 
