@@ -4,6 +4,8 @@ Visualize your Linear issues as interactive hill charts. Track progress from "fi
 
 <img width="1660" height="700" alt="image" src="https://github.com/user-attachments/assets/8a9f1d8a-61ce-4bce-84ea-88a23ef96889" />
 
+[Live app](https://linear-hills.routific.com/)
+
 
 ## Features
 
