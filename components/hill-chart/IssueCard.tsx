@@ -33,7 +33,7 @@ export function IssueCard({
     <g
       className={`transition-opacity ${
         isDragging ? "opacity-50" : "opacity-100"
-      } cursor-move`}
+      } cursor-move select-none`}
     >
       <foreignObject
         x={cardX}
@@ -41,7 +41,7 @@ export function IssueCard({
         width={cardWidth}
         height={cardHeight}
       >
-        <div className="w-full h-full p-3 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-lg hover:shadow-xl hover:shadow-primary/10 transition-all hover:border-primary/50 hover:bg-card/90 group">
+        <div className="w-full h-full p-3 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-lg hover:shadow-xl hover:shadow-primary/10 transition-all hover:border-primary/50 hover:bg-card/90 group select-none">
           <div className="flex items-start justify-between mb-1 gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <span className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">

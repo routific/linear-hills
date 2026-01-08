@@ -30,7 +30,7 @@ export function SortableIssueCard({ issue }: SortableIssueCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="group rounded-xl border border-border/50 bg-card/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 cursor-move"
+      className="group rounded-xl border border-border/50 bg-card/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 cursor-move select-none"
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">

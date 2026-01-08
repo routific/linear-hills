@@ -228,7 +228,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
               ref={svgRef}
               width={svgWidth}
               height={svgHeight}
-              className="mx-auto"
+              className="mx-auto select-none"
               style={{ minWidth: svgWidth }}
               onMouseMove={handleDragMove}
               onMouseUp={handleDragEnd}
