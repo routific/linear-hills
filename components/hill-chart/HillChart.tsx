@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useCallback } from "react";
+import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { HillCurve } from "./HillCurve";
 import { GridLines } from "./GridLines";
 import { IssueCard } from "./IssueCard";
@@ -56,6 +56,29 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
   const svgRef = useRef<SVGSVGElement>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [tempPositions, setTempPositions] = useState<Record<string, number>>({});
+  const [leftCollapsed, setLeftCollapsed] = useState<boolean | undefined>(undefined);
+  const [rightCollapsed, setRightCollapsed] = useState<boolean | undefined>(undefined);
+
+  // Keyboard shortcuts for toggling parking lots
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.key === '[') {
+        e.preventDefault();
+        setLeftCollapsed((prev) => !prev);
+      } else if (e.key === ']') {
+        e.preventDefault();
+        setRightCollapsed((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const positionedIssues: PositionedIssue[] = useMemo(() => {
     if (!inProgressIssues) return [];
@@ -79,9 +102,9 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
     });
   }, [inProgressIssues, issuePositions, projectId, tempPositions]);
 
-  const chartWidth = 800;
+  const chartWidth = 1000;
   const chartHeight = 300;
-  const padding = { top: 80, right: 40, bottom: 60, left: 40 };
+  const padding = { top: 80, right: 120, bottom: 60, left: 120 };
   const svgWidth = chartWidth + padding.left + padding.right;
   const svgHeight = chartHeight + padding.top + padding.bottom;
 
@@ -165,6 +188,8 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
           storageKey={`parking-lot-left-${projectId}`}
           side="left"
           projectId={projectId}
+          isCollapsed={leftCollapsed}
+          onToggleCollapse={() => setLeftCollapsed((prev) => !prev)}
         />
 
         {/* Center - Hill Chart */}
@@ -253,6 +278,8 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
           storageKey={`parking-lot-right-${projectId}`}
           side="right"
           projectId={projectId}
+          isCollapsed={rightCollapsed}
+          onToggleCollapse={() => setRightCollapsed((prev) => !prev)}
         />
       </div>
     </div>

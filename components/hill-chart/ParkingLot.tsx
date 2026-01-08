@@ -27,14 +27,28 @@ interface ParkingLotProps {
   storageKey: string;
   side: "left" | "right";
   projectId: string;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const COLLAPSED_WIDTH = 48;
 const EXPANDED_WIDTH = 320;
 
-export function ParkingLot({ title, issues, emptyMessage, storageKey, side, projectId }: ParkingLotProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export function ParkingLot({
+  title,
+  issues,
+  emptyMessage,
+  storageKey,
+  side,
+  projectId,
+  isCollapsed: externalCollapsed,
+  onToggleCollapse
+}: ParkingLotProps) {
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
   const hasInitialized = useRef(false);
+
+  // Use external state if provided, otherwise use internal state
+  const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
 
   const parkingLotOrders = useAppStore((state) => state.parkingLotOrders);
   const updateParkingLotOrder = useAppStore((state) => state.updateParkingLotOrder);
@@ -84,24 +98,29 @@ export function ParkingLot({ title, issues, emptyMessage, storageKey, side, proj
   }, [issues, parkingLotOrders, projectId, side]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    // Only manage localStorage if using internal state
+    if (externalCollapsed !== undefined || typeof window === "undefined") {
       return;
     }
 
     if (!hasInitialized.current) {
       const saved = localStorage.getItem(storageKey);
       if (saved !== null) {
-        setIsCollapsed(JSON.parse(saved));
+        setInternalCollapsed(JSON.parse(saved));
       }
       hasInitialized.current = true;
       return;
     }
 
-    localStorage.setItem(storageKey, JSON.stringify(isCollapsed));
-  }, [isCollapsed, storageKey]);
+    localStorage.setItem(storageKey, JSON.stringify(internalCollapsed));
+  }, [internalCollapsed, storageKey, externalCollapsed]);
 
   const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
+    if (onToggleCollapse) {
+      onToggleCollapse();
+    } else {
+      setInternalCollapsed(!internalCollapsed);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
