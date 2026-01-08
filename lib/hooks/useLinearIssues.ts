@@ -18,7 +18,7 @@ export function useLinearIssues({
   return useQuery({
     queryKey: ["linear-issues", teamId, projectId, labelFilter],
     queryFn: async (): Promise<LinearIssue[]> => {
-      const client = getLinearClient();
+      const client = await getLinearClient();
       const team = await client.team(teamId);
 
       const filter: any = {

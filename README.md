@@ -4,19 +4,38 @@ Visualize your Linear issues as interactive hill charts. Track progress from "fi
 
 ## Features
 
+- **OAuth 2.0 Authentication** - Secure integration with Linear's official OAuth flow
 - **Auto-sync** with Linear issues based on labels
 - **Drag-and-drop** positioning to track progress
 - **Multiple projects** - organize different hill charts
 - **Browser storage** - positions persist locally
 - **Real-time updates** - syncs with Linear every 5 minutes
+- **Token refresh** - automatic token renewal for uninterrupted access
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 20.3.0 or higher
-- A Linear account with API access
-- Linear API key ([Get one here](https://linear.app/settings/api))
+- A Linear account with workspace admin access
+- Linear OAuth application credentials
+
+### OAuth Application Setup
+
+1. **Create a Linear OAuth Application**:
+   - Go to [Linear Settings > API > Applications](https://linear.app/settings/api/applications)
+   - Click "New OAuth application"
+   - Fill in the application details:
+     - **Name**: Linear Hill Charts
+     - **Description**: Visualize Linear issues as interactive hill charts
+     - **Redirect URLs**: Add your callback URLs:
+       - Development: `http://localhost:3000/api/auth/callback`
+       - Production: `https://yourdomain.com/api/auth/callback`
+     - **Scopes**: Select `read` and `write`
+
+2. **Copy your OAuth credentials**:
+   - Client ID
+   - Client Secret (keep this secure!)
 
 ### Installation
 
@@ -27,17 +46,36 @@ Visualize your Linear issues as interactive hill charts. Track progress from "fi
    npm install
    ```
 
-3. **Run the development server**:
+3. **Configure environment variables**:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+   Edit `.env.local` and add your OAuth credentials:
+   ```env
+   LINEAR_OAUTH_CLIENT_ID=your_client_id_here
+   LINEAR_OAUTH_CLIENT_SECRET=your_client_secret_here
+   LINEAR_OAUTH_REDIRECT_URI=http://localhost:3000/api/auth/callback
+   SESSION_SECRET=your_random_session_secret_here
+   NEXTAUTH_URL=http://localhost:3000
+   ```
+
+   Generate a secure session secret:
+   ```bash
+   openssl rand -base64 32
+   ```
+
+4. **Run the development server**:
    ```bash
    npm run dev
    ```
 
-4. **Open your browser** to [http://localhost:3000](http://localhost:3000)
+5. **Open your browser** to [http://localhost:3000](http://localhost:3000)
 
 ### First-Time Setup
 
-1. Enter your Linear API key on the setup page
-2. Click "Test Connection" to verify
+1. Click "Connect with Linear" on the setup page
+2. Authorize the application in Linear
 3. Create your first project:
    - Choose a name for your hill chart
    - Select a Linear team
@@ -80,7 +118,14 @@ Hill charts are inspired by [Basecamp's hill charts](https://basecamp.com/featur
 
 ```
 ├── app/                      # Next.js app directory
-│   ├── setup/               # API key setup page
+│   ├── api/
+│   │   └── auth/            # OAuth API routes
+│   │       ├── login/       # Initiate OAuth flow
+│   │       ├── callback/    # OAuth callback handler
+│   │       ├── token/       # Token endpoint with auto-refresh
+│   │       ├── logout/      # Logout and token revocation
+│   │       └── session/     # Session status check
+│   ├── setup/               # OAuth login page
 │   ├── projects/            # Projects list and individual views
 │   ├── layout.tsx           # Root layout with providers
 │   └── page.tsx             # Home page (redirects)
@@ -90,6 +135,9 @@ Hill charts are inspired by [Basecamp's hill charts](https://basecamp.com/featur
 │   ├── layout/              # Layout components
 │   └── ui/                  # Reusable UI components
 ├── lib/
+│   ├── auth/                # OAuth and session management
+│   │   ├── oauth.ts         # OAuth utilities
+│   │   └── session.ts       # Encrypted session management
 │   ├── linear/              # Linear API integration
 │   ├── storage/             # localStorage management
 │   ├── store/               # Zustand state management
@@ -102,7 +150,7 @@ Hill charts are inspired by [Basecamp's hill charts](https://basecamp.com/featur
 
 ### Built With
 
-- **Next.js 15** - React framework
+- **Next.js 15** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling
 - **Zustand** - State management
@@ -110,11 +158,20 @@ Hill charts are inspired by [Basecamp's hill charts](https://basecamp.com/featur
 - **Linear SDK** - Linear API client
 - **Zod** - Runtime validation
 
+### Authentication & Security
+
+- **OAuth 2.0** - Industry-standard authorization protocol
+- **PKCE** - Proof Key for Code Exchange for enhanced security
+- **Encrypted Sessions** - Server-side encrypted cookie sessions
+- **Automatic Token Refresh** - Tokens refresh automatically before expiration
+- **Secure Storage** - OAuth tokens never stored in browser localStorage
+- **CSRF Protection** - State parameter validation
+
 ### Data Storage
 
-- **API Key**: Stored in browser localStorage
-- **Projects**: Stored in browser localStorage
-- **Issue Positions**: Stored in browser localStorage
+- **OAuth Tokens**: Encrypted server-side session cookies
+- **Projects**: Browser localStorage
+- **Issue Positions**: Browser localStorage
 - **Issue Metadata**: Fetched from Linear (not stored)
 
 ### Browser Support
@@ -124,17 +181,55 @@ Modern browsers with localStorage support:
 - Firefox 88+
 - Safari 14+
 
+## Deployment
+
+### Environment Variables (Production)
+
+Update your production environment variables:
+
+```env
+LINEAR_OAUTH_CLIENT_ID=your_production_client_id
+LINEAR_OAUTH_CLIENT_SECRET=your_production_client_secret
+LINEAR_OAUTH_REDIRECT_URI=https://yourdomain.com/api/auth/callback
+SESSION_SECRET=your_production_session_secret
+NEXTAUTH_URL=https://yourdomain.com
+NODE_ENV=production
+```
+
+### OAuth Application Settings
+
+In your Linear OAuth application settings, add your production redirect URL:
+- `https://yourdomain.com/api/auth/callback`
+
+### Deployment Platforms
+
+This app works with any Next.js-compatible platform:
+- Vercel (recommended)
+- Netlify
+- Railway
+- Your own server
+
 ## Troubleshooting
+
+### OAuth Issues
+
+**Problem**: "OAuth error" or "Invalid state"
+
+**Solutions**:
+- Verify your OAuth credentials are correct
+- Check redirect URI matches exactly what's in Linear settings
+- Ensure SESSION_SECRET is set
+- Try clearing browser cookies and logging in again
 
 ### Connection Issues
 
-**Problem**: "Failed to connect to Linear"
+**Problem**: "Failed to get access token"
 
 **Solutions**:
-- Verify your API key is correct
-- Check you have internet connection
-- Ensure your Linear account has API access
-- Try generating a new API key
+- Check your internet connection
+- Verify OAuth application is active in Linear
+- Check server logs for detailed error messages
+- Try logging out and back in
 
 ### No Issues Showing
 
@@ -166,24 +261,49 @@ Modern browsers with localStorage support:
 - `npm run lint` - Run ESLint
 - `npm run type-check` - Run TypeScript type checking
 
-### Environment Variables
+### Testing OAuth Flow Locally
 
-No environment variables required! The app uses localStorage for all configuration.
+1. Ensure `.env.local` is properly configured
+2. Start the development server: `npm run dev`
+3. Navigate to `http://localhost:3000`
+4. Click "Connect with Linear"
+5. Authorize the application
+6. You should be redirected back to `/projects`
+
+## Submitting to Linear Marketplace
+
+This integration is built following Linear's OAuth best practices and is ready for marketplace submission:
+
+1. **OAuth 2.0** - Uses recommended OAuth flow instead of API keys
+2. **Refresh Tokens** - Implements token refresh for long-lived sessions
+3. **Minimal Scopes** - Requests only required permissions (`read`, `write`)
+4. **Security** - Implements PKCE, CSRF protection, and secure token storage
+5. **No Hardcoded Credentials** - All sensitive data in environment variables
+
+To submit to the Linear marketplace:
+1. Visit the [Linear Integration Directory](https://linear.app/docs/integration-directory)
+2. Fill out the submission form
+3. Contact integrations@linear.app with your assets
 
 ## Roadmap
 
 Future enhancements:
-- [ ] Backend sync for multi-device support
+- [ ] Backend database for multi-device sync
 - [ ] Position history and timeline view
 - [ ] Export to PDF/PNG
 - [ ] Multiple label filters per project
 - [ ] Issue filtering by assignee, state, priority
 - [ ] Collaborative features
 - [ ] Mobile app
+- [ ] Webhooks for real-time updates
 
 ## Contributing
 
 This is a personal project, but suggestions and feedback are welcome!
+
+## Security
+
+If you discover a security vulnerability, please email the maintainer directly rather than opening an issue.
 
 ## License
 

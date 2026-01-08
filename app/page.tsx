@@ -7,16 +7,20 @@ import { initializeLinearClient } from "@/lib/linear/client";
 
 export default function Home() {
   const router = useRouter();
-  const apiKey = useAppStore((state) => state.apiKey);
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
 
   useEffect(() => {
-    if (apiKey) {
-      initializeLinearClient(apiKey);
+    if (isAuthenticated) {
+      // Initialize Linear client when authenticated
+      initializeLinearClient().catch((error) => {
+        console.error('Failed to initialize Linear client:', error);
+        router.push('/setup');
+      });
       router.push("/projects");
     } else {
       router.push("/setup");
     }
-  }, [apiKey, router]);
+  }, [isAuthenticated, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

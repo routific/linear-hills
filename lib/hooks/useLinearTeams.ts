@@ -11,7 +11,7 @@ export function useLinearTeams(enabled: boolean = true) {
   return useQuery({
     queryKey: ["linear-teams"],
     queryFn: async (): Promise<LinearTeam[]> => {
-      const client = getLinearClient();
+      const client = await getLinearClient();
       const teamsConnection = await client.teams();
 
       return teamsConnection.nodes.map((team) => ({

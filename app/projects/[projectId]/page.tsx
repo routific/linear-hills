@@ -18,7 +18,7 @@ export default function ProjectPage({
 }) {
   const router = useRouter();
   const resolvedParams = use(params);
-  const apiKey = useAppStore((state) => state.apiKey);
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const projects = useAppStore((state) => state.projects);
   const lastSync = useAppStore((state) => state.lastSync);
   const setLastSync = useAppStore((state) => state.setLastSync);
@@ -33,14 +33,17 @@ export default function ProjectPage({
   });
 
   useEffect(() => {
-    if (apiKey) {
-      initializeLinearClient(apiKey);
+    if (isAuthenticated) {
+      initializeLinearClient().catch((error) => {
+        console.error('Failed to initialize Linear client:', error);
+        router.push('/setup');
+      });
     } else {
       router.push("/setup");
     }
-  }, [apiKey, router]);
+  }, [isAuthenticated, router]);
 
-  if (!apiKey) {
+  if (!isAuthenticated) {
     return null;
   }
 

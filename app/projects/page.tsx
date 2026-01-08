@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,16 +11,20 @@ import { useAppStore } from "@/lib/store/appStore";
 export default function ProjectsPage() {
   const router = useRouter();
   const projects = useAppStore((state) => state.projects);
-  const apiKey = useAppStore((state) => state.apiKey);
-  const clearApiKey = useAppStore((state) => state.clearApiKey);
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const logout = useAppStore((state) => state.logout);
 
-  const handleLogout = () => {
-    clearApiKey();
-    router.push("/setup");
+  const handleLogout = async () => {
+    await logout();
   };
 
-  if (!apiKey) {
-    router.push("/setup");
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/setup");
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
     return null;
   }
 
@@ -36,7 +41,7 @@ export default function ProjectsPage() {
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout} className="border-border/50">
-            Change API Key
+            Logout
           </Button>
         </div>
       </header>

@@ -1,11 +1,6 @@
 import { create } from "zustand";
 import type { Project, IssuePosition, ParkingLotOrder } from "@/types";
 import {
-  getApiKey,
-  setApiKey as saveApiKey,
-  removeApiKey as deleteApiKey,
-} from "../storage/apiKey";
-import {
   getProjects,
   setProjects as saveProjects,
   addProject as addProjectToStorage,
@@ -24,7 +19,7 @@ import {
 } from "../storage/parkingLotOrder";
 
 interface AppState {
-  apiKey: string | null;
+  isAuthenticated: boolean;
   projects: Project[];
   activeProjectId: string | null;
   issuePositions: Record<string, IssuePosition>;
@@ -32,8 +27,8 @@ interface AppState {
   isSyncing: boolean;
   lastSync: string | null;
 
-  setApiKey: (key: string) => void;
-  clearApiKey: () => void;
+  setAuthenticated: (authenticated: boolean) => void;
+  logout: () => Promise<void>;
 
   setActiveProject: (id: string | null) => void;
   addProject: (project: Project) => void;
@@ -54,7 +49,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
-  apiKey: null,
+  isAuthenticated: false,
   projects: [],
   activeProjectId: null,
   issuePositions: {},
@@ -62,14 +57,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   isSyncing: false,
   lastSync: null,
 
-  setApiKey: (key: string) => {
-    saveApiKey(key);
-    set({ apiKey: key });
+  setAuthenticated: (authenticated: boolean) => {
+    set({ isAuthenticated: authenticated });
   },
 
-  clearApiKey: () => {
-    deleteApiKey();
-    set({ apiKey: null });
+  logout: async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      set({ isAuthenticated: false });
+      window.location.href = '/setup';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   },
 
   setActiveProject: (id: string | null) => {
@@ -160,8 +159,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ lastSync: timestamp });
   },
 
-  hydrate: () => {
-    const apiKey = getApiKey();
+  hydrate: async () => {
     const projects = getProjects();
     const positions = getIssuePositions();
     const orders = getParkingLotOrders();
@@ -183,8 +181,18 @@ export const useAppStore = create<AppState>((set, get) => ({
       {} as Record<string, ParkingLotOrder>
     );
 
+    // Check authentication status
+    let isAuthenticated = false;
+    try {
+      const response = await fetch('/api/auth/session');
+      const data = await response.json();
+      isAuthenticated = data.authenticated;
+    } catch (error) {
+      console.error('Failed to check authentication:', error);
+    }
+
     set({
-      apiKey,
+      isAuthenticated,
       projects,
       issuePositions: positionsRecord,
       parkingLotOrders: ordersRecord,

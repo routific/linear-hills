@@ -13,7 +13,7 @@ export function useLinearProjects(teamId: string, enabled: boolean = true) {
     queryFn: async (): Promise<LinearProject[]> => {
       if (!teamId) return [];
 
-      const client = getLinearClient();
+      const client = await getLinearClient();
       const team = await client.team(teamId);
       const projectsConnection = await team.projects();
 

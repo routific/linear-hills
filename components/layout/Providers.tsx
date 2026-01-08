@@ -18,8 +18,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const hydrate = useAppStore((state) => state.hydrate);
 
   useEffect(() => {
-    hydrate();
-    setMounted(true);
+    hydrate().then(() => {
+      setMounted(true);
+    });
   }, [hydrate]);
 
   if (!mounted) {

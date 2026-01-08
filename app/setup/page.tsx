@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -11,64 +10,39 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAppStore } from "@/lib/store/appStore";
-import { initializeLinearClient } from "@/lib/linear/client";
-import { useLinearTeams } from "@/lib/hooks/useLinearTeams";
 
 export default function SetupPage() {
   const router = useRouter();
-  const [apiKey, setApiKey] = useState("");
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [connectionSuccess, setConnectionSuccess] = useState(false);
+  const searchParams = useSearchParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const setGlobalApiKey = useAppStore((state) => state.setApiKey);
+  // Check for OAuth errors from callback
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
 
-  const {
-    data: teams,
-    isLoading: isLoadingTeams,
-    refetch: testConnection,
-  } = useLinearTeams(false);
+    if (errorParam) {
+      const errorMessages: Record<string, string> = {
+        access_denied: 'You denied access to your Linear account',
+        invalid_request: 'Invalid OAuth request',
+        invalid_state: 'Invalid security token. Please try again',
+        callback_failed: 'Failed to complete authentication',
+      };
 
-  const handleTestConnection = async () => {
-    if (!apiKey.trim()) {
-      setConnectionError("Please enter an API key");
-      return;
-    }
-
-    setIsTestingConnection(true);
-    setConnectionError(null);
-    setConnectionSuccess(false);
-
-    try {
-      initializeLinearClient(apiKey.trim());
-
-      const result = await testConnection();
-
-      if (result.data && result.data.length > 0) {
-        setConnectionSuccess(true);
-        setConnectionError(null);
-      } else {
-        setConnectionError("No teams found. Please check your API key.");
-      }
-    } catch (error) {
-      console.error("Connection test failed:", error);
-      setConnectionError(
-        error instanceof Error
-          ? error.message
-          : "Failed to connect to Linear. Please check your API key."
+      setError(
+        errorDescription ||
+        errorMessages[errorParam] ||
+        'Authentication failed. Please try again'
       );
-      setConnectionSuccess(false);
-    } finally {
-      setIsTestingConnection(false);
     }
-  };
+  }, [searchParams]);
 
-  const handleContinue = () => {
-    if (connectionSuccess && apiKey.trim()) {
-      setGlobalApiKey(apiKey.trim());
-      router.push("/projects");
-    }
+  const handleLogin = () => {
+    setIsLoading(true);
+    setError(null);
+    // Redirect to OAuth login endpoint
+    window.location.href = '/api/auth/login';
   };
 
   return (
@@ -87,73 +61,62 @@ export default function SetupPage() {
           <CardHeader>
             <CardTitle>Welcome</CardTitle>
             <CardDescription>
-              Enter your Linear API key to get started
+              Connect your Linear account to get started
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="apiKey" className="text-sm font-medium">
-                Linear API Key
-              </label>
-              <Input
-                id="apiKey"
-                type="password"
-                placeholder="lin_api_..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleTestConnection();
-                  }
-                }}
-                className="bg-background/50 border-border/50"
-              />
-              <p className="text-xs text-muted-foreground">
-                Get your API key from{" "}
-                <a
-                  href="https://linear.app/settings/api"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  Linear Settings
-                </a>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                This app uses OAuth 2.0 to securely access your Linear account.
+                You&apos;ll be redirected to Linear to authorize access.
               </p>
+
+              <div className="p-3 rounded-lg bg-primary/5 border border-border/50">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">
+                  Permissions requested:
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-0.5">•</span>
+                    <span>Read access to your teams, projects, and issues</span>
+                  </li>
+                </ul>
+              </div>
             </div>
 
-            {connectionError && (
+            {error && (
               <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-                {connectionError}
+                {error}
               </div>
             )}
 
-            {connectionSuccess && teams && (
-              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-primary text-sm">
-                Connected successfully! Found {teams.length} team
-                {teams.length !== 1 ? "s" : ""}:{" "}
-                {teams.map((t) => t.name).join(", ")}
-              </div>
-            )}
+            <Button
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="w-full shadow-lg shadow-primary/20"
+            >
+              {isLoading ? 'Connecting...' : 'Connect with Linear'}
+            </Button>
 
-            <div className="flex gap-2">
-              <Button
-                onClick={handleTestConnection}
-                disabled={isTestingConnection || !apiKey.trim()}
-                variant="outline"
-                className="flex-1 border-border/50"
-              >
-                {isTestingConnection ? "Testing..." : "Test Connection"}
-              </Button>
-              <Button
-                onClick={handleContinue}
-                disabled={!connectionSuccess}
-                className="flex-1 shadow-lg shadow-primary/20"
-              >
-                Continue
-              </Button>
-            </div>
+            <p className="text-xs text-center text-muted-foreground">
+              By connecting, you agree to authorize this app to access your Linear data
+            </p>
           </CardContent>
         </Card>
+
+        <div className="mt-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            Need help?{" "}
+            <a
+              href="https://linear.app/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              View Linear Documentation
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

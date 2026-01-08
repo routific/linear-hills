@@ -30,7 +30,6 @@ export const ParkingLotOrderSchema = z.object({
 });
 
 export const STORAGE_KEYS = {
-  API_KEY: "linear_api_key",
   PROJECTS: "projects",
   ISSUE_POSITIONS: "issue_positions",
   PARKING_LOT_ORDER: "parking_lot_order",
