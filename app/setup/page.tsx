@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Image from "next/image";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -46,8 +47,33 @@ export default function SetupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
+      {/* Subtle animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }}></div>
+        <div className="absolute bottom-1/3 -right-32 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s', animationDelay: '4s' }}></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        {/* Logo */}
+        <div className="mb-8 flex justify-center">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <div className="relative transition-all duration-300">
+              <Image
+                src="/logo.png"
+                alt="Linear Hill Charts Logo"
+                width={140}
+                height={140}
+                className="w-32 h-32 object-contain"
+                priority
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Title */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Linear Hill Charts
@@ -93,7 +119,7 @@ export default function SetupPage() {
             <Button
               onClick={handleLogin}
               disabled={isLoading}
-              className="w-full shadow-lg shadow-primary/20"
+              className="w-full shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30"
             >
               {isLoading ? 'Connecting...' : 'Connect with Linear'}
             </Button>
@@ -111,7 +137,7 @@ export default function SetupPage() {
               href="https://linear.app/docs"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline"
+              className="text-primary hover:underline transition-colors"
             >
               View Linear Documentation
             </a>
