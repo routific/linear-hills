@@ -45,7 +45,7 @@ interface AppState {
   setSyncing: (syncing: boolean) => void;
   setLastSync: (timestamp: string) => void;
 
-  hydrate: () => void;
+  hydrate: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({

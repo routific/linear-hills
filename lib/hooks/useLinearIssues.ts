@@ -78,7 +78,7 @@ export function useLinearIssues({
         filter: labelFilterObj,
       });
 
-      const issuesData = response.data?.issues?.nodes || [];
+      const issuesData = (response.data as any)?.issues?.nodes || [];
 
       return issuesData.map((issue: any) => {
         const children = issue.children?.nodes || [];
