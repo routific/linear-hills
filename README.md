@@ -2,6 +2,9 @@
 
 Visualize your Linear issues as interactive hill charts. Track progress from "figuring things out" to "making it happen" with an intuitive drag-and-drop interface.
 
+<img width="1660" height="700" alt="image" src="https://github.com/user-attachments/assets/8a9f1d8a-61ce-4bce-84ea-88a23ef96889" />
+
+
 ## Features
 
 - **OAuth 2.0 Authentication** - Secure integration with Linear's official OAuth flow
