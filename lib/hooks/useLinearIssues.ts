@@ -19,81 +19,106 @@ export function useLinearIssues({
     queryKey: ["linear-issues", teamId, projectId, labelFilter],
     queryFn: async (): Promise<LinearIssue[]> => {
       const client = await getLinearClient();
-      const team = await client.team(teamId);
 
-      const filter: any = {
+      // Build filter
+      const labelFilterObj = {
         labels: { name: { eq: labelFilter } },
-      };
+        team: { id: { eq: teamId } },
+      } as any;
 
       // Add project filter if provided
       if (projectId) {
-        filter.project = { id: { eq: projectId } };
+        labelFilterObj.project = { id: { eq: projectId } };
       }
 
-      const issuesConnection = await team.issues({ filter });
-
-      const issues = issuesConnection.nodes;
-
-      return Promise.all(
-        issues.map(async (issue) => {
-          const state = await issue.state;
-          const assignee = await issue.assignee;
-          const labelsConnection = await issue.labels();
-
-          // Fetch child issues (subtasks)
-          let subtaskCount = 0;
-          let completedSubtaskCount = 0;
-
-          try {
-            const childrenConnection = await issue.children();
-            const children = childrenConnection?.nodes || [];
-            subtaskCount = children.length;
-
-            if (children.length > 0) {
-              const completedStatuses = await Promise.all(
-                children.map(async (child) => {
-                  const childState = await child.state;
-                  return childState?.type === "completed" || childState?.type === "canceled";
-                })
-              );
-
-              completedSubtaskCount = completedStatuses.filter(Boolean).length;
-            }
-          } catch (error) {
-            console.error("Error fetching children for issue:", issue.identifier, error);
-          }
-
-          return {
-            id: issue.id,
-            identifier: issue.identifier,
-            title: issue.title,
-            description: issue.description || undefined,
-            state: {
-              id: state?.id || "",
-              name: state?.name || "",
-              type: state?.type || "",
-            },
-            assignee: assignee
-              ? {
-                  id: assignee.id,
-                  name: assignee.name,
-                  avatarUrl: assignee.avatarUrl || undefined,
+      // Use GraphQL query to fetch issues with children counts in one request
+      const query = `
+        query Issues($filter: IssueFilter!) {
+          issues(filter: $filter) {
+            nodes {
+              id
+              identifier
+              title
+              description
+              priority
+              url
+              createdAt
+              updatedAt
+              state {
+                id
+                name
+                type
+              }
+              assignee {
+                id
+                name
+                avatarUrl
+              }
+              labels {
+                nodes {
+                  id
+                  name
+                  color
                 }
-              : undefined,
-            priority: issue.priority,
-            labels: (labelsConnection?.nodes || []).map((label) => ({
-              id: label.id,
-              name: label.name,
-              color: label.color,
-            })),
-            url: issue.url,
-            createdAt: issue.createdAt.toISOString(),
-            updatedAt: issue.updatedAt.toISOString(),
-            subtaskCount: subtaskCount,
-            completedSubtaskCount: completedSubtaskCount,
-          };
-        })
-      );
+              }
+              children {
+                nodes {
+                  id
+                  state {
+                    type
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await client.client.rawRequest(query, {
+        filter: labelFilterObj,
+      });
+
+      const issuesData = response.data?.issues?.nodes || [];
+
+      return issuesData.map((issue: any) => {
+        const children = issue.children?.nodes || [];
+        const subtaskCount = children.length;
+        const completedSubtaskCount = children.filter(
+          (child: any) =>
+            child.state?.type === "completed" ||
+            child.state?.type === "canceled"
+        ).length;
+
+        return {
+          id: issue.id,
+          identifier: issue.identifier,
+          title: issue.title,
+          description: issue.description || undefined,
+          state: {
+            id: issue.state?.id || "",
+            name: issue.state?.name || "",
+            type: issue.state?.type || "",
+          },
+          assignee: issue.assignee
+            ? {
+                id: issue.assignee.id,
+                name: issue.assignee.name,
+                avatarUrl: issue.assignee.avatarUrl || undefined,
+              }
+            : undefined,
+          priority: issue.priority,
+          labels: (issue.labels?.nodes || []).map((label: any) => ({
+            id: label.id,
+            name: label.name,
+            color: label.color,
+          })),
+          url: issue.url,
+          createdAt: issue.createdAt,
+          updatedAt: issue.updatedAt,
+          subtaskCount,
+          completedSubtaskCount,
+        };
+      });
     },
     enabled: enabled && !!teamId && !!labelFilter,
     refetchInterval: 5 * 60 * 1000,
