@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(uuid())
+  linearUserId    String          @unique
+  linearUserName  String
+  linearUserEmail String?
+  avatarUrl       String?
+  createdAt       DateTime        @default(now())
+  lastSeenAt      DateTime        @default(now())
+  workspaces      WorkspaceUser[]
+
+  @@index([linearUserId])
+}
+
+model Workspace {
+  id                     String          @id @default(uuid())
+  linearOrganizationId   String          @unique
+  linearOrganizationName String
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  users                  WorkspaceUser[]
+  projects               Project[]
+
+  @@index([linearOrganizationId])
+}
+
+model WorkspaceUser {
+  id          String    @id @default(uuid())
+  userId      String
+  workspaceId String
+  role        String    @default("member")
+  joinedAt    DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([userId])
+  @@index([workspaceId])
+}
+
+model Project {
+  id                String            @id @default(uuid())
+  workspaceId       String
+  name              String
+  description       String?
+  linearTeamId      String
+  linearTeamName    String?
+  linearProjectId   String?
+  linearProjectName String?
+  labelFilter       String
+  color             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  issuePositions    IssuePosition[]
+  parkingLotOrders  ParkingLotOrder[]
+
+  @@index([workspaceId])
+  @@index([linearTeamId])
+}
+
+model IssuePosition {
+  id          String   @id @default(uuid())
+  issueId     String
+  projectId   String
+  xPosition   Float
+  notes       String?
+  lastUpdated DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, projectId])
+  @@index([projectId])
+}
+
+model ParkingLotOrder {
+  id          String   @id @default(uuid())
+  projectId   String
+  side        String
+  issueIds    String[]
+  lastUpdated DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, side])
+  @@index([projectId])
+}

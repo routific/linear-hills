@@ -5,8 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { LinearClient } from '@linear/sdk';
 import { getOAuthConfig, exchangeCodeForTokens } from '@/lib/auth/oauth';
 import { setSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,6 +68,55 @@ export async function GET(request: NextRequest) {
       refreshToken: tokens.refresh_token,
       expiresAt,
       scope: tokens.scope,
+    });
+
+    // Fetch Linear user and organization data
+    const client = new LinearClient({ accessToken: tokens.access_token });
+    const viewer = await client.viewer;
+    const organization = await viewer.organization;
+
+    // Create or update user in database
+    const user = await prisma.user.upsert({
+      where: { linearUserId: viewer.id },
+      create: {
+        linearUserId: viewer.id,
+        linearUserName: viewer.name,
+        linearUserEmail: viewer.email,
+        avatarUrl: viewer.avatarUrl,
+      },
+      update: {
+        linearUserName: viewer.name,
+        linearUserEmail: viewer.email,
+        avatarUrl: viewer.avatarUrl,
+        lastSeenAt: new Date(),
+      },
+    });
+
+    // Create or update workspace (organization) in database
+    const workspace = await prisma.workspace.upsert({
+      where: { linearOrganizationId: organization.id },
+      create: {
+        linearOrganizationId: organization.id,
+        linearOrganizationName: organization.name,
+      },
+      update: {
+        linearOrganizationName: organization.name,
+      },
+    });
+
+    // Link user to workspace
+    await prisma.workspaceUser.upsert({
+      where: {
+        userId_workspaceId: {
+          userId: user.id,
+          workspaceId: workspace.id,
+        },
+      },
+      create: {
+        userId: user.id,
+        workspaceId: workspace.id,
+      },
+      update: {},
     });
 
     // Clear OAuth state cookies
