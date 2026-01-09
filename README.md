@@ -6,6 +6,18 @@ Visualize your Linear issues as interactive hill charts. Track progress from "fi
 
 [Live app](https://linear-hills.routific.com/)
 
+## How It Works
+
+Here's what this app assumes:
+- A pitch in Shape Up maps to a Linear Project.
+- An issue with a label (e.g. Slice) maps to a slice in Shape Up.
+
+1. Connect your Linear account with OAuth
+2. Create a "New Hillchart" and choose your Linear project to create it for
+3. Choose what label you'd like to use as slices to sync
+4. Issues that are started are put on the hill chart
+5. Drag 'n drop and relish in your progress!
+
 
 ## Features
 
