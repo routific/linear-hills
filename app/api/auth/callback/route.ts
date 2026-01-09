@@ -75,6 +75,17 @@ export async function GET(request: NextRequest) {
     const viewer = await client.viewer;
     const organization = await viewer.organization;
 
+    // Check if user has an organization
+    if (!organization || !organization.id) {
+      return NextResponse.redirect(
+        new URL(
+          '/setup?error=no_organization&error_description=' +
+          encodeURIComponent('You must be part of a Linear organization to use workspace collaboration features.'),
+          request.url
+        )
+      );
+    }
+
     // Create or update user in database
     const user = await prisma.user.upsert({
       where: { linearUserId: viewer.id },

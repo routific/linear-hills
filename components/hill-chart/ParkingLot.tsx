@@ -86,8 +86,8 @@ export function ParkingLot({
     }
 
     // Create a map of issue IDs to their saved order index
-    const orderMap = new Map(
-      savedOrder.issueIds.map((id, index) => [id, index])
+    const orderMap = new Map<string, number>(
+      savedOrder.issueIds.map((id: string, index: number) => [id, index])
     );
 
     // Separate issues into ordered and new (not in saved order)

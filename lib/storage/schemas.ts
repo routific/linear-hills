@@ -37,3 +37,15 @@ export const STORAGE_KEYS = {
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
+
+/**
+ * Clears only the app-specific localStorage keys
+ * Preserves other localStorage data (e.g., parking lot collapse state)
+ */
+export function clearAppStorage() {
+  if (typeof window === 'undefined') return;
+
+  Object.values(STORAGE_KEYS).forEach((key) => {
+    localStorage.removeItem(key);
+  });
+}

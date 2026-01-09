@@ -17,6 +17,7 @@ import {
   updateParkingLotOrder as updateOrderInStorage,
   deleteOrdersByProject,
 } from "../storage/parkingLotOrder";
+import { clearAppStorage } from "../storage/schemas";
 
 interface AppState {
   isAuthenticated: boolean;
@@ -205,9 +206,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Authenticated: check for localStorage data to migrate
     const localProjects = getProjects();
     const hasLocalData = localProjects.length > 0;
+    const migrationAttempted = localStorage.getItem('migration_attempted');
 
-    if (hasLocalData) {
+    if (hasLocalData && !migrationAttempted) {
       try {
+        // Mark migration as attempted to prevent retries on failure
+        localStorage.setItem('migration_attempted', 'true');
+
         // Migrate localStorage data to database
         console.log('Migrating localStorage data to database...');
         const localPositions = getIssuePositions();
@@ -224,14 +229,16 @@ export const useAppStore = create<AppState>((set, get) => ({
         });
 
         if (response.ok) {
-          // Clear localStorage after successful migration
-          localStorage.clear();
-          console.log('Migration successful, localStorage cleared');
+          // Clear app-specific localStorage after successful migration
+          clearAppStorage();
+          console.log('Migration successful, app localStorage cleared');
         } else {
           console.error('Migration failed:', await response.text());
+          // Keep migration_attempted flag to prevent infinite retries
         }
       } catch (error) {
         console.error('Migration error:', error);
+        // Keep migration_attempted flag to prevent infinite retries
       }
     }
 
