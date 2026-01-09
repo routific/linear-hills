@@ -19,6 +19,8 @@ import { SortableIssueCard } from "./SortableIssueCard";
 import type { LinearIssue } from "@/types";
 import { cn } from "@/lib/utils/cn";
 import { useAppStore } from "@/lib/store/appStore";
+import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
+import { useUpdateParkingLotOrder } from "@/lib/hooks/mutations/useUpdateParkingLotOrder";
 
 interface ParkingLotProps {
   title: string;
@@ -55,8 +57,17 @@ export function ParkingLot({
   // Use external state if provided, otherwise use internal state
   const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
 
-  const parkingLotOrders = useAppStore((state) => state.parkingLotOrders);
-  const updateParkingLotOrder = useAppStore((state) => state.updateParkingLotOrder);
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const storeParkingLotOrders = useAppStore((state) => state.parkingLotOrders);
+
+  // Use workspace data if authenticated, otherwise fall back to store
+  const { data: workspaceData } = useWorkspaceData();
+  const parkingLotOrders = isAuthenticated && workspaceData
+    ? workspaceData.parkingLotOrders
+    : storeParkingLotOrders;
+
+  const updateOrderMutation = useUpdateParkingLotOrder();
+  const updateParkingLotOrderStore = useAppStore((state) => state.updateParkingLotOrder);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -123,11 +134,19 @@ export function ParkingLot({
 
     if (oldIndex !== -1 && newIndex !== -1) {
       const reorderedIssues = arrayMove(sortedIssues, oldIndex, newIndex);
-      updateParkingLotOrder(
-        projectId,
-        side,
-        reorderedIssues.map((issue) => issue.id)
-      );
+      const issueIds = reorderedIssues.map((issue) => issue.id);
+
+      // Use mutation for authenticated users, store for unauthenticated
+      if (isAuthenticated) {
+        updateOrderMutation.mutate({
+          projectId,
+          side,
+          issueIds,
+          lastUpdated: new Date().toISOString(),
+        });
+      } else {
+        updateParkingLotOrderStore(projectId, side, issueIds);
+      }
     }
   };
 

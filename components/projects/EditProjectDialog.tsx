@@ -23,6 +23,7 @@ import {
 import { useLinearTeams } from "@/lib/hooks/useLinearTeams";
 import { useLinearProjects } from "@/lib/hooks/useLinearProjects";
 import { useAppStore } from "@/lib/store/appStore";
+import { useUpdateProject } from "@/lib/hooks/mutations/useProjectMutations";
 import type { Project } from "@/types";
 
 interface EditProjectDialogProps {
@@ -43,7 +44,10 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
     selectedTeamId,
     open && !!selectedTeamId
   );
-  const updateProject = useAppStore((state) => state.updateProject);
+
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const updateProjectStore = useAppStore((state) => state.updateProject);
+  const updateProjectMutation = useUpdateProject();
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -64,7 +68,7 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
     const team = teams?.find((t) => t.id === selectedTeamId);
     const linearProject = projects?.find((p) => p.id === selectedProjectId);
 
-    updateProject(project.id, {
+    const updates = {
       name: name.trim(),
       description: description.trim() || undefined,
       linearTeamId: selectedTeamId,
@@ -73,7 +77,14 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
       linearProjectName: linearProject?.name,
       labelFilter: labelFilter.trim(),
       updatedAt: new Date().toISOString(),
-    });
+    };
+
+    // Use mutation for authenticated users, store for unauthenticated
+    if (isAuthenticated) {
+      updateProjectMutation.mutate({ id: project.id, updates });
+    } else {
+      updateProjectStore(project.id, updates);
+    }
 
     setOpen(false);
   };

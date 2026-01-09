@@ -24,6 +24,7 @@ import {
 import { useLinearTeams } from "@/lib/hooks/useLinearTeams";
 import { useLinearProjects } from "@/lib/hooks/useLinearProjects";
 import { useAppStore } from "@/lib/store/appStore";
+import { useCreateProject } from "@/lib/hooks/mutations/useProjectMutations";
 import type { Project } from "@/types";
 
 interface CreateProjectDialogProps {
@@ -43,7 +44,10 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
     selectedTeamId,
     open && !!selectedTeamId
   );
-  const addProject = useAppStore((state) => state.addProject);
+
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const addProjectStore = useAppStore((state) => state.addProject);
+  const createProjectMutation = useCreateProject();
 
   const handleCreate = () => {
     if (!name.trim() || !selectedTeamId || !selectedProjectId || !labelFilter.trim()) {
@@ -66,7 +70,12 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
       updatedAt: new Date().toISOString(),
     };
 
-    addProject(project);
+    // Use mutation for authenticated users, store for unauthenticated
+    if (isAuthenticated) {
+      createProjectMutation.mutate(project);
+    } else {
+      addProjectStore(project);
+    }
 
     setName("");
     setDescription("");

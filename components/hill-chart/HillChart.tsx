@@ -7,6 +7,8 @@ import { IssueCard } from "./IssueCard";
 import { ParkingLot } from "./ParkingLot";
 import { useLinearIssues } from "@/lib/hooks/useLinearIssues";
 import { useAppStore } from "@/lib/store/appStore";
+import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
+import { useUpdateIssuePosition } from "@/lib/hooks/mutations/useUpdateIssuePosition";
 import { screenToHillPosition } from "@/lib/utils/hillMath";
 import type { LinearIssue, IssuePosition } from "@/types";
 
@@ -29,8 +31,17 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
     labelFilter,
   });
 
-  const issuePositions = useAppStore((state) => state.issuePositions);
-  const updateIssuePosition = useAppStore((state) => state.updateIssuePosition);
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const storePositions = useAppStore((state) => state.issuePositions);
+
+  // Use workspace data if authenticated, otherwise fall back to store
+  const { data: workspaceData } = useWorkspaceData();
+  const issuePositions = isAuthenticated && workspaceData
+    ? workspaceData.issuePositions
+    : storePositions;
+
+  const updatePositionMutation = useUpdateIssuePosition();
+  const updateIssuePositionStore = useAppStore((state) => state.updateIssuePosition);
 
   // Filter issues by state type and name
   const { backlogIssues, inProgressIssues, doneIssues } = useMemo(() => {
@@ -161,17 +172,24 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
 
   const handleDragEnd = useCallback(() => {
     if (draggingId && tempPositions[draggingId] !== undefined) {
-      updateIssuePosition(draggingId, {
+      const position = {
         issueId: draggingId,
         projectId,
         xPosition: tempPositions[draggingId],
         lastUpdated: new Date().toISOString(),
-      });
+      };
+
+      // Use mutation for authenticated users, store for unauthenticated
+      if (isAuthenticated) {
+        updatePositionMutation.mutate(position);
+      } else {
+        updateIssuePositionStore(draggingId, position);
+      }
     }
 
     setDraggingId(null);
     setTempPositions({});
-  }, [draggingId, tempPositions, updateIssuePosition, projectId]);
+  }, [draggingId, tempPositions, projectId, isAuthenticated, updatePositionMutation, updateIssuePositionStore]);
 
   if (isLoading) {
     return (

@@ -7,12 +7,19 @@ import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { useAppStore } from "@/lib/store/appStore";
+import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const projects = useAppStore((state) => state.projects);
+  const storeProjects = useAppStore((state) => state.projects);
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const logout = useAppStore((state) => state.logout);
+
+  // Use workspace data if authenticated, otherwise fall back to store
+  const { data: workspaceData } = useWorkspaceData();
+  const projects = isAuthenticated && workspaceData
+    ? workspaceData.projects
+    : storeProjects;
 
   const handleLogout = async () => {
     await logout();
