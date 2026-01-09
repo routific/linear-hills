@@ -32,14 +32,9 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 backdrop-blur-sm bg-background/95 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Linear Hill Charts
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage your hillcharts
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Linear Hill Charts
+          </h1>
           <Button variant="outline" size="sm" onClick={handleLogout} className="border-border/50">
             Logout
           </Button>
@@ -48,12 +43,9 @@ export default function ProjectsPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-xl font-semibold">Your Hillcharts</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {projects.length} hillchart{projects.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            {projects.length} {projects.length === 1 ? "hillchart" : "hillcharts"}
+          </p>
           <CreateProjectDialog>
             <Button className="shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
               <Plus className="mr-2 h-4 w-4" />
