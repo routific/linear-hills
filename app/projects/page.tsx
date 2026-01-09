@@ -37,7 +37,7 @@ export default function ProjectsPage() {
               Linear Hill Charts
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Manage your project hill charts
+              Manage your hillcharts
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout} className="border-border/50">
@@ -49,15 +49,15 @@ export default function ProjectsPage() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-xl font-semibold">Your Projects</h2>
+            <h2 className="text-xl font-semibold">Your Hillcharts</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {projects.length} project{projects.length !== 1 ? "s" : ""}
+              {projects.length} hillchart{projects.length !== 1 ? "s" : ""}
             </p>
           </div>
           <CreateProjectDialog>
             <Button className="shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
               <Plus className="mr-2 h-4 w-4" />
-              New Project
+              New Hillchart
             </Button>
           </CreateProjectDialog>
         </div>
@@ -68,12 +68,12 @@ export default function ProjectsPage() {
               <Plus className="w-10 h-10 text-primary" />
             </div>
             <p className="text-muted-foreground mb-6 text-lg">
-              No projects yet. Create your first hill chart project to get started.
+              No hillcharts yet. Create your first hillchart to get started.
             </p>
             <CreateProjectDialog>
               <Button className="shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
                 <Plus className="mr-2 h-4 w-4" />
-                Create Project
+                Create Hillchart
               </Button>
             </CreateProjectDialog>
           </div>

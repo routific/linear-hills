@@ -85,15 +85,15 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Edit Project</DialogTitle>
+          <DialogTitle>Edit Hillchart</DialogTitle>
           <DialogDescription>
-            Update your hill chart project settings
+            Update your hillchart settings
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="edit-name">Project Name</Label>
+            <Label htmlFor="edit-name">Hillchart Name</Label>
             <Input
               id="edit-name"
               placeholder="Q1 2024 Features"

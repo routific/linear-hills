@@ -51,9 +51,9 @@ export default function ProjectPage({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground mb-4">Project not found</p>
+          <p className="text-muted-foreground mb-4">Hillchart not found</p>
           <Button onClick={() => router.push("/projects")}>
-            Back to Projects
+            Back to Hillcharts
           </Button>
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function ProjectPage({
               className="hover:bg-muted/50"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Projects
+              Back to Hillcharts
             </Button>
             <Button
               variant="outline"

@@ -83,15 +83,15 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
+          <DialogTitle>Create New Hillchart</DialogTitle>
           <DialogDescription>
-            Create a new hill chart for Linear issues with a specific label
+            Create a new hillchart for Linear issues with a specific label
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Project Name</Label>
+            <Label htmlFor="name">Hillchart Name</Label>
             <Input
               id="name"
               placeholder="Q1 2024 Features"
@@ -198,7 +198,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
             Cancel
           </Button>
           <Button type="button" onClick={handleCreate} disabled={!isValid}>
-            Create Project
+            Create Hillchart
           </Button>
         </DialogFooter>
       </DialogContent>

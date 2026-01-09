@@ -208,7 +208,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
 
   return (
     <div className="w-full">
-      <div className="flex items-start gap-6">
+      <div className="flex items-stretch gap-6" style={{ minHeight: `${svgHeight}px` }}>
         {/* Left Parking Lot - Backlog/Todo */}
         <ParkingLot
           title="Not Started"
@@ -222,8 +222,8 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
         />
 
         {/* Center - Hill Chart */}
-        <div className="min-w-0 flex-1 overflow-x-auto">
-          <div className="rounded-2xl border border-border/30 bg-card/30 p-6 backdrop-blur-sm">
+        <div className="min-w-0 flex-1 overflow-x-auto flex flex-col">
+          <div className="rounded-2xl border border-border/30 bg-card/30 p-6 backdrop-blur-sm flex-1 flex items-center justify-center">
             <svg
               ref={svgRef}
               width={svgWidth}
