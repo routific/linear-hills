@@ -160,28 +160,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   hydrate: async () => {
-    const projects = getProjects();
-    const positions = getIssuePositions();
-    const orders = getParkingLotOrders();
-
-    const positionsRecord = positions.reduce(
-      (acc, pos) => {
-        acc[pos.issueId] = pos;
-        return acc;
-      },
-      {} as Record<string, IssuePosition>
-    );
-
-    const ordersRecord = orders.reduce(
-      (acc, ord) => {
-        const key = `${ord.projectId}-${ord.side}`;
-        acc[key] = ord;
-        return acc;
-      },
-      {} as Record<string, ParkingLotOrder>
-    );
-
-    // Check authentication status
+    // Check authentication status first
     let isAuthenticated = false;
     try {
       const response = await fetch('/api/auth/session');
@@ -191,11 +170,90 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.error('Failed to check authentication:', error);
     }
 
-    set({
-      isAuthenticated,
-      projects,
-      issuePositions: positionsRecord,
-      parkingLotOrders: ordersRecord,
-    });
+    // Unauthenticated: load from localStorage (existing behavior)
+    if (!isAuthenticated) {
+      const projects = getProjects();
+      const positions = getIssuePositions();
+      const orders = getParkingLotOrders();
+
+      const positionsRecord = positions.reduce(
+        (acc, pos) => {
+          acc[pos.issueId] = pos;
+          return acc;
+        },
+        {} as Record<string, IssuePosition>
+      );
+
+      const ordersRecord = orders.reduce(
+        (acc, ord) => {
+          const key = `${ord.projectId}-${ord.side}`;
+          acc[key] = ord;
+          return acc;
+        },
+        {} as Record<string, ParkingLotOrder>
+      );
+
+      set({
+        isAuthenticated: false,
+        projects,
+        issuePositions: positionsRecord,
+        parkingLotOrders: ordersRecord,
+      });
+      return;
+    }
+
+    // Authenticated: check for localStorage data to migrate
+    const localProjects = getProjects();
+    const hasLocalData = localProjects.length > 0;
+
+    if (hasLocalData) {
+      try {
+        // Migrate localStorage data to database
+        console.log('Migrating localStorage data to database...');
+        const localPositions = getIssuePositions();
+        const localOrders = getParkingLotOrders();
+
+        const response = await fetch('/api/migrate/localStorage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projects: localProjects,
+            issuePositions: localPositions,
+            parkingLotOrders: localOrders,
+          }),
+        });
+
+        if (response.ok) {
+          // Clear localStorage after successful migration
+          localStorage.clear();
+          console.log('Migration successful, localStorage cleared');
+        } else {
+          console.error('Migration failed:', await response.text());
+        }
+      } catch (error) {
+        console.error('Migration error:', error);
+      }
+    }
+
+    // Load data from database
+    try {
+      const response = await fetch('/api/data/sync');
+      if (response.ok) {
+        const data = await response.json();
+        set({
+          isAuthenticated: true,
+          projects: data.projects,
+          issuePositions: data.issuePositions,
+          parkingLotOrders: data.parkingLotOrders,
+          lastSync: data.lastSync,
+        });
+      } else {
+        console.error('Failed to load workspace data');
+        set({ isAuthenticated: true });
+      }
+    } catch (error) {
+      console.error('Failed to sync workspace data:', error);
+      set({ isAuthenticated: true });
+    }
   },
 }));
