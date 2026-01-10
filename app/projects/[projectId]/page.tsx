@@ -9,6 +9,7 @@ import { HillChart } from "@/components/hill-chart/HillChart";
 import { useAppStore } from "@/lib/store/appStore";
 import { initializeLinearClient } from "@/lib/linear/client";
 import { useLinearIssues } from "@/lib/hooks/useLinearIssues";
+import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
 import { use } from "react";
 
 export default function ProjectPage({
@@ -19,9 +20,15 @@ export default function ProjectPage({
   const router = useRouter();
   const resolvedParams = use(params);
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
-  const projects = useAppStore((state) => state.projects);
+  const storeProjects = useAppStore((state) => state.projects);
   const lastSync = useAppStore((state) => state.lastSync);
   const setLastSync = useAppStore((state) => state.setLastSync);
+
+  // Use workspace data if authenticated, otherwise fall back to store
+  const { data: workspaceData } = useWorkspaceData();
+  const projects = isAuthenticated && workspaceData
+    ? workspaceData.projects
+    : storeProjects;
 
   const project = projects.find((p) => p.id === resolvedParams.projectId);
 
