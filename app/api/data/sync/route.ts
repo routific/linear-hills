@@ -12,10 +12,19 @@ export async function GET() {
     // Authenticate and get workspace context
     const { workspace } = await authenticateRequest();
 
-    // Fetch all projects for the workspace
+    // Fetch all projects for the workspace with last activity user
     const projects = await prisma.project.findMany({
       where: { workspaceId: workspace.id },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { lastActivityAt: 'desc' },
+      include: {
+        lastActivityBy: {
+          select: {
+            id: true,
+            linearUserName: true,
+            avatarUrl: true,
+          },
+        },
+      },
     });
 
     // Fetch all issue positions for workspace projects
@@ -79,6 +88,12 @@ export async function GET() {
       color: p.color || undefined,
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
+      lastActivityAt: p.lastActivityAt.toISOString(),
+      lastActivityBy: p.lastActivityBy ? {
+        id: p.lastActivityBy.id,
+        name: p.lastActivityBy.linearUserName,
+        avatarUrl: p.lastActivityBy.avatarUrl || undefined,
+      } : undefined,
     }));
 
     return NextResponse.json({

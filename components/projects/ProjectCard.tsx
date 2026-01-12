@@ -120,9 +120,33 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
-          <span className="text-xs text-muted-foreground">
-            Updated {formatDistanceToNow(new Date(project.updatedAt))} ago
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              Last updated {formatDistanceToNow(new Date(project.lastActivityAt || project.updatedAt))} ago
+            </span>
+            {project.lastActivityBy && (
+              <>
+                <span className="text-xs text-muted-foreground">by</span>
+                {project.lastActivityBy.avatarUrl ? (
+                  <img
+                    src={project.lastActivityBy.avatarUrl}
+                    alt={project.lastActivityBy.name}
+                    className="w-5 h-5 rounded-full border border-border"
+                    title={project.lastActivityBy.name}
+                  />
+                ) : (
+                  <div
+                    className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center border border-border"
+                    title={project.lastActivityBy.name}
+                  >
+                    <span className="text-[10px] font-semibold text-primary">
+                      {project.lastActivityBy.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {showConfirm && (

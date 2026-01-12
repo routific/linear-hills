@@ -1,3 +1,9 @@
+export interface ProjectUser {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -9,5 +15,7 @@ export interface Project {
   labelFilter: string;
   createdAt: string;
   updatedAt: string;
+  lastActivityAt?: string;
+  lastActivityBy?: ProjectUser;
   color?: string;
 }

@@ -10,7 +10,7 @@ import { IssuePositionSchema } from '@/lib/storage/schemas';
 
 export async function POST(request: NextRequest) {
   try {
-    const { workspace } = await authenticateRequest();
+    const { user, workspace } = await authenticateRequest();
     const body = await request.json();
 
     // Validate position data
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert position with current timestamp
+    const now = new Date();
     const position = await prisma.issuePosition.upsert({
       where: {
         issueId_projectId: {
@@ -71,12 +72,21 @@ export async function POST(request: NextRequest) {
         projectId: validatedData.projectId,
         xPosition: validatedData.xPosition,
         notes: validatedData.notes,
-        lastUpdated: new Date(),
+        lastUpdated: now,
       },
       update: {
         xPosition: validatedData.xPosition,
         notes: validatedData.notes,
-        lastUpdated: new Date(),
+        lastUpdated: now,
+      },
+    });
+
+    // Update project's last activity
+    await prisma.project.update({
+      where: { id: validatedData.projectId },
+      data: {
+        lastActivityAt: now,
+        lastActivityByUserId: user.id,
       },
     });
 

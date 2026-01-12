@@ -11,14 +11,15 @@ datasource db {
 }
 
 model User {
-  id              String          @id @default(uuid())
-  linearUserId    String          @unique
-  linearUserName  String
-  linearUserEmail String?
-  avatarUrl       String?
-  createdAt       DateTime        @default(now())
-  lastSeenAt      DateTime        @default(now())
-  workspaces      WorkspaceUser[]
+  id                    String          @id @default(uuid())
+  linearUserId          String          @unique
+  linearUserName        String
+  linearUserEmail       String?
+  avatarUrl             String?
+  createdAt             DateTime        @default(now())
+  lastSeenAt            DateTime        @default(now())
+  workspaces            WorkspaceUser[]
+  lastActivityProjects  Project[]
 
   @@index([linearUserId])
 }
@@ -50,24 +51,28 @@ model WorkspaceUser {
 }
 
 model Project {
-  id                String            @id @default(uuid())
-  workspaceId       String
-  name              String
-  description       String?
-  linearTeamId      String
-  linearTeamName    String?
-  linearProjectId   String?
-  linearProjectName String?
-  labelFilter       String
-  color             String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  issuePositions    IssuePosition[]
-  parkingLotOrders  ParkingLotOrder[]
+  id                  String            @id @default(uuid())
+  workspaceId         String
+  name                String
+  description         String?
+  linearTeamId        String
+  linearTeamName      String?
+  linearProjectId     String?
+  linearProjectName   String?
+  labelFilter         String
+  color               String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  lastActivityAt      DateTime          @default(now())
+  lastActivityByUserId String?
+  workspace           Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lastActivityBy      User?             @relation(fields: [lastActivityByUserId], references: [id], onDelete: SetNull)
+  issuePositions      IssuePosition[]
+  parkingLotOrders    ParkingLotOrder[]
 
   @@index([workspaceId])
   @@index([linearTeamId])
+  @@index([lastActivityByUserId])
 }
 
 model IssuePosition {

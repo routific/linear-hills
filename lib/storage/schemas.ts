@@ -11,6 +11,7 @@ export const ProjectSchema = z.object({
   labelFilter: z.string().min(1, "Label filter is required"),
   createdAt: z.string(),
   updatedAt: z.string(),
+  lastActivityAt: z.string().optional(),
   color: z.string().optional(),
 });
 

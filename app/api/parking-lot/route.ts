@@ -10,7 +10,7 @@ import { ParkingLotOrderSchema } from '@/lib/storage/schemas';
 
 export async function POST(request: NextRequest) {
   try {
-    const { workspace } = await authenticateRequest();
+    const { user, workspace } = await authenticateRequest();
     const body = await request.json();
 
     // Validate parking lot order data
@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert parking lot order with current timestamp
+    const now = new Date();
     const order = await prisma.parkingLotOrder.upsert({
       where: {
         projectId_side: {
@@ -43,11 +44,20 @@ export async function POST(request: NextRequest) {
         projectId: validatedData.projectId,
         side: validatedData.side,
         issueIds: validatedData.issueIds,
-        lastUpdated: new Date(),
+        lastUpdated: now,
       },
       update: {
         issueIds: validatedData.issueIds,
-        lastUpdated: new Date(),
+        lastUpdated: now,
+      },
+    });
+
+    // Update project's last activity
+    await prisma.project.update({
+      where: { id: validatedData.projectId },
+      data: {
+        lastActivityAt: now,
+        lastActivityByUserId: user.id,
       },
     });
 

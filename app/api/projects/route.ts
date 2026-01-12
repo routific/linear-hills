@@ -15,7 +15,16 @@ export async function GET() {
 
     const projects = await prisma.project.findMany({
       where: { workspaceId: workspace.id },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { lastActivityAt: 'desc' },
+      include: {
+        lastActivityBy: {
+          select: {
+            id: true,
+            linearUserName: true,
+            avatarUrl: true,
+          },
+        },
+      },
     });
 
     const formatted = projects.map((p) => ({
@@ -30,6 +39,12 @@ export async function GET() {
       color: p.color || undefined,
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
+      lastActivityAt: p.lastActivityAt.toISOString(),
+      lastActivityBy: p.lastActivityBy ? {
+        id: p.lastActivityBy.id,
+        name: p.lastActivityBy.linearUserName,
+        avatarUrl: p.lastActivityBy.avatarUrl || undefined,
+      } : undefined,
     }));
 
     return NextResponse.json({ projects: formatted });
@@ -51,7 +66,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { workspace } = await authenticateRequest();
+    const { user, workspace } = await authenticateRequest();
     const body = await request.json();
 
     // Validate project data
@@ -70,6 +85,16 @@ export async function POST(request: NextRequest) {
         linearProjectName: validatedData.linearProjectName,
         labelFilter: validatedData.labelFilter,
         color: validatedData.color,
+        lastActivityByUserId: user.id,
+      },
+      include: {
+        lastActivityBy: {
+          select: {
+            id: true,
+            linearUserName: true,
+            avatarUrl: true,
+          },
+        },
       },
     });
 
@@ -85,6 +110,12 @@ export async function POST(request: NextRequest) {
       color: project.color || undefined,
       createdAt: project.createdAt.toISOString(),
       updatedAt: project.updatedAt.toISOString(),
+      lastActivityAt: project.lastActivityAt.toISOString(),
+      lastActivityBy: project.lastActivityBy ? {
+        id: project.lastActivityBy.id,
+        name: project.lastActivityBy.linearUserName,
+        avatarUrl: project.lastActivityBy.avatarUrl || undefined,
+      } : undefined,
     });
   } catch (error) {
     if (error instanceof AuthenticationError) {
