@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useLinearTeams } from "@/lib/hooks/useLinearTeams";
 import { useLinearProjects } from "@/lib/hooks/useLinearProjects";
+import { useLinearLabels } from "@/lib/hooks/useLinearLabels";
 import { useAppStore } from "@/lib/store/appStore";
 import { useUpdateProject } from "@/lib/hooks/mutations/useProjectMutations";
 import type { Project } from "@/types";
@@ -41,6 +42,10 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
 
   const { data: teams, isLoading: isLoadingTeams } = useLinearTeams(open);
   const { data: projects, isLoading: isLoadingProjects } = useLinearProjects(
+    selectedTeamId,
+    open && !!selectedTeamId
+  );
+  const { data: labels, isLoading: isLoadingLabels } = useLinearLabels(
     selectedTeamId,
     open && !!selectedTeamId
   );
@@ -67,6 +72,7 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
 
     const team = teams?.find((t) => t.id === selectedTeamId);
     const linearProject = projects?.find((p) => p.id === selectedProjectId);
+    const label = labels?.find((l) => l.name === labelFilter);
 
     const updates = {
       name: name.trim(),
@@ -75,7 +81,7 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
       linearTeamName: team?.name,
       linearProjectId: selectedProjectId,
       linearProjectName: linearProject?.name,
-      labelFilter: labelFilter.trim(),
+      labelFilter: label?.name || labelFilter.trim(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -135,6 +141,7 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
               onValueChange={(value) => {
                 setSelectedTeamId(value);
                 setSelectedProjectId(""); // Reset project when team changes
+                setLabelFilter(""); // Reset label when team changes
               }}
             >
               <SelectTrigger id="edit-team">
@@ -195,12 +202,38 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
 
           <div className="grid gap-2">
             <Label htmlFor="edit-label">Label Filter</Label>
-            <Input
-              id="edit-label"
-              placeholder="hill-chart"
+            <Select
               value={labelFilter}
-              onChange={(e) => setLabelFilter(e.target.value)}
-            />
+              onValueChange={setLabelFilter}
+              disabled={!selectedTeamId}
+            >
+              <SelectTrigger id="edit-label">
+                <SelectValue placeholder="Select a label" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingLabels && (
+                  <SelectItem value="loading" disabled>
+                    Loading labels...
+                  </SelectItem>
+                )}
+                {labels?.map((label) => (
+                  <SelectItem key={label.id} value={label.name}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: label.color }}
+                      />
+                      {label.name}
+                    </div>
+                  </SelectItem>
+                ))}
+                {!isLoadingLabels && labels?.length === 0 && selectedTeamId && (
+                  <SelectItem value="none" disabled>
+                    No labels found
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">
               Only issues with this label will appear on the hill chart
             </p>
