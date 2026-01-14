@@ -9,6 +9,7 @@ import { EditProjectDialog } from "./EditProjectDialog";
 import { useLinearTeams } from "@/lib/hooks/useLinearTeams";
 import { useLinearProjects } from "@/lib/hooks/useLinearProjects";
 import { useAppStore } from "@/lib/store/appStore";
+import { useDeleteProject } from "@/lib/hooks/mutations/useProjectMutations";
 import type { Project } from "@/types";
 import { useState } from "react";
 
@@ -18,7 +19,9 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   const router = useRouter();
-  const deleteProject = useAppStore((state) => state.deleteProject);
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const deleteProjectStore = useAppStore((state) => state.deleteProject);
+  const deleteProjectMutation = useDeleteProject();
   const [showConfirm, setShowConfirm] = useState(false);
 
   // Fetch team and project names as fallback for older projects
@@ -43,7 +46,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
       setShowConfirm(true);
       setTimeout(() => setShowConfirm(false), 3000);
     } else {
-      deleteProject(project.id);
+      // Use mutation for authenticated users, store for unauthenticated
+      if (isAuthenticated) {
+        deleteProjectMutation.mutate(project.id);
+      } else {
+        deleteProjectStore(project.id);
+      }
       setShowConfirm(false);
     }
   };
