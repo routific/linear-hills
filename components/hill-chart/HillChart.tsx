@@ -144,7 +144,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
 
   const chartWidth = 1000;
   const chartHeight = 300;
-  const padding = { top: 150, right: 120, bottom: 60, left: 120 };
+  const padding = { top: 150, right: 160, bottom: 60, left: 160 };
   const svgWidth = chartWidth + padding.left + padding.right;
   const svgHeight = chartHeight + padding.top + padding.bottom;
 
