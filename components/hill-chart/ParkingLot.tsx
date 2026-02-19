@@ -31,6 +31,7 @@ interface ParkingLotProps {
   projectId: string;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  compact?: boolean;
 }
 
 const KeyboardHint = ({ keys }: { keys: string }) => (
@@ -50,7 +51,8 @@ export function ParkingLot({
   side,
   projectId,
   isCollapsed: externalCollapsed,
-  onToggleCollapse
+  onToggleCollapse,
+  compact = false,
 }: ParkingLotProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(true);
 
@@ -242,7 +244,7 @@ export function ParkingLot({
             >
               <div className="space-y-3">
                 {sortedIssues.map((issue) => (
-                  <SortableIssueCard key={issue.id} issue={issue} />
+                  <SortableIssueCard key={issue.id} issue={issue} compact={compact} />
                 ))}
               </div>
             </SortableContext>

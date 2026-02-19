@@ -3,12 +3,14 @@ import { CSS } from "@dnd-kit/utilities";
 import { ExternalLink } from "lucide-react";
 import { SubtaskProgress } from "@/components/ui/subtask-progress";
 import type { LinearIssue } from "@/types";
+import { cn } from "@/lib/utils/cn";
 
 interface SortableIssueCardProps {
   issue: LinearIssue;
+  compact?: boolean;
 }
 
-export function SortableIssueCard({ issue }: SortableIssueCardProps) {
+export function SortableIssueCard({ issue, compact = false }: SortableIssueCardProps) {
   const {
     attributes,
     listeners,
@@ -30,22 +32,27 @@ export function SortableIssueCard({ issue }: SortableIssueCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="group rounded-xl border border-border/50 bg-card/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 cursor-move select-none"
+      className={cn(
+        "group rounded-xl border border-border/50 bg-card/60 shadow-sm backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 cursor-move select-none",
+        compact ? "px-2 py-1.5" : "p-3"
+      )}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
+      <div className={cn("flex items-center gap-2", !compact && "mb-2 items-start justify-between")}>
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="truncate text-xs font-semibold text-foreground transition-colors group-hover:text-primary">
             {issue.identifier}
           </span>
-          <a
-            href={issue.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
-          </a>
+          {!compact && (
+            <a
+              href={issue.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
+            </a>
+          )}
         </div>
         {issue.assignee && (
           <div className="flex-shrink-0">
@@ -65,15 +72,19 @@ export function SortableIssueCard({ issue }: SortableIssueCardProps) {
         )}
       </div>
 
-      <p className="mb-2 line-clamp-2 text-xs leading-snug text-muted-foreground">
-        {issue.title}
-      </p>
+      {!compact && (
+        <>
+          <p className="mb-2 line-clamp-2 text-xs leading-snug text-muted-foreground">
+            {issue.title}
+          </p>
 
-      <SubtaskProgress
-        completed={issue.completedSubtaskCount}
-        total={issue.subtaskCount}
-        size={14}
-      />
+          <SubtaskProgress
+            completed={issue.completedSubtaskCount}
+            total={issue.subtaskCount}
+            size={14}
+          />
+        </>
+      )}
     </div>
   );
 }

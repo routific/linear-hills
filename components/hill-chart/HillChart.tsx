@@ -10,6 +10,7 @@ import { useAppStore } from "@/lib/store/appStore";
 import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
 import { useUpdateIssuePosition } from "@/lib/hooks/mutations/useUpdateIssuePosition";
 import { screenToHillPosition } from "@/lib/utils/hillMath";
+import { Minimize2, Maximize2 } from "lucide-react";
 import type { LinearIssue, IssuePosition } from "@/types";
 
 interface HillChartProps {
@@ -69,6 +70,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
   const [tempPositions, setTempPositions] = useState<Record<string, number>>({});
   const [leftCollapsed, setLeftCollapsed] = useState(true);
   const [rightCollapsed, setRightCollapsed] = useState(true);
+  const [compactMode, setCompactMode] = useState(false);
 
   // Initialize from localStorage
   useEffect(() => {
@@ -76,15 +78,20 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
 
     const leftKey = `parking-lot-left-${projectId}`;
     const rightKey = `parking-lot-right-${projectId}`;
+    const compactKey = `hill-compact-mode-${projectId}`;
 
     const savedLeft = localStorage.getItem(leftKey);
     const savedRight = localStorage.getItem(rightKey);
+    const savedCompact = localStorage.getItem(compactKey);
 
     if (savedLeft !== null) {
       setLeftCollapsed(JSON.parse(savedLeft));
     }
     if (savedRight !== null) {
       setRightCollapsed(JSON.parse(savedRight));
+    }
+    if (savedCompact !== null) {
+      setCompactMode(JSON.parse(savedCompact));
     }
   }, [projectId]);
 
@@ -98,6 +105,11 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
     if (typeof window === "undefined") return;
     localStorage.setItem(`parking-lot-right-${projectId}`, JSON.stringify(rightCollapsed));
   }, [rightCollapsed, projectId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(`hill-compact-mode-${projectId}`, JSON.stringify(compactMode));
+  }, [compactMode, projectId]);
 
   // Keyboard shortcuts for toggling parking lots
   useEffect(() => {
@@ -237,11 +249,19 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
           projectId={projectId}
           isCollapsed={leftCollapsed}
           onToggleCollapse={() => setLeftCollapsed((prev) => !prev)}
+          compact={compactMode}
         />
 
         {/* Center - Hill Chart */}
         <div className="min-w-0 flex-1 overflow-x-auto flex flex-col">
-          <div className="rounded-2xl border border-border/30 bg-card/30 p-6 backdrop-blur-sm flex-1 flex items-center justify-center">
+          <div className="relative rounded-2xl border border-border/30 bg-card/30 p-6 backdrop-blur-sm flex-1 flex items-center justify-center">
+            <button
+              onClick={() => setCompactMode((prev) => !prev)}
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg border border-border/50 bg-card/80 text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
+              title={compactMode ? "Expand cards" : "Compact cards"}
+            >
+              {compactMode ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+            </button>
             <svg
               ref={svgRef}
               width={svgWidth}
@@ -285,6 +305,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
                       chartWidth={chartWidth}
                       chartHeight={chartHeight}
                       isDragging={draggingId === issue.id}
+                      compact={compactMode}
                     />
                   </g>
                 ))}
@@ -327,6 +348,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
           projectId={projectId}
           isCollapsed={rightCollapsed}
           onToggleCollapse={() => setRightCollapsed((prev) => !prev)}
+          compact={compactMode}
         />
       </div>
     </div>
