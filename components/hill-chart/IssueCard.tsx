@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { hillPositionToScreen } from "@/lib/utils/hillMath";
 import { ExternalLink } from "lucide-react";
 import { SubtaskProgress } from "@/components/ui/subtask-progress";
@@ -26,8 +27,11 @@ export function IssueCard({
     chartHeight
   );
 
-  const cardWidth = compact ? 120 : 200;
-  const cardHeight = compact ? 36 : 100;
+  const [hovered, setHovered] = useState(false);
+  const expanded = !compact || hovered;
+
+  const cardWidth = expanded ? 200 : 120;
+  const cardHeight = expanded ? 100 : 36;
   const cardX = coords.x - cardWidth / 2;
   const cardY = coords.y - cardHeight - 10;
 
@@ -36,6 +40,8 @@ export function IssueCard({
       className={`transition-opacity ${
         isDragging ? "opacity-50" : "opacity-100"
       } cursor-move select-none`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <foreignObject
         x={cardX}
@@ -43,7 +49,7 @@ export function IssueCard({
         width={cardWidth}
         height={cardHeight}
       >
-        {compact ? (
+        {compact && !hovered ? (
           <div className="w-full h-full px-2 flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg shadow-lg hover:shadow-xl hover:shadow-primary/10 transition-all hover:border-primary/50 hover:bg-card/90 group select-none">
             <span className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">
               {issue.identifier}

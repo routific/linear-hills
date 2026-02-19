@@ -71,6 +71,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
   const [leftCollapsed, setLeftCollapsed] = useState(true);
   const [rightCollapsed, setRightCollapsed] = useState(true);
   const [compactMode, setCompactMode] = useState(false);
+  const [hoveredIssueId, setHoveredIssueId] = useState<string | null>(null);
 
   // Initialize from localStorage
   useEffect(() => {
@@ -125,6 +126,9 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
       } else if (e.key === ']') {
         e.preventDefault();
         setRightCollapsed((prev) => !prev);
+      } else if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        setCompactMode((prev) => !prev);
       }
     };
 
@@ -257,10 +261,12 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
           <div className="relative rounded-2xl border border-border/30 bg-card/30 p-6 backdrop-blur-sm flex-1 flex items-center justify-center">
             <button
               onClick={() => setCompactMode((prev) => !prev)}
-              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg border border-border/50 bg-card/80 text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
-              title={compactMode ? "Expand cards" : "Compact cards"}
+              className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border/50 bg-card/80 text-muted-foreground hover:text-foreground hover:bg-card transition-colors text-xs"
+              title={compactMode ? "Expand cards (C)" : "Compact cards (C)"}
             >
-              {compactMode ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+              {compactMode ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+              <span>Compact mode</span>
+              <kbd className="ml-1 rounded border border-border/60 bg-muted/30 px-1 py-0.5 text-[10px] font-medium shadow-sm">C</kbd>
             </button>
             <svg
               ref={svgRef}
@@ -293,22 +299,49 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
                 <GridLines width={chartWidth} height={chartHeight} />
                 <HillCurve width={chartWidth} height={chartHeight} />
 
-                {positionedIssues.map(({ issue, position }) => (
-                  <g
-                    key={issue.id}
-                    onMouseDown={() => handleDragStart(issue.id)}
-                    style={{ cursor: "move" }}
-                  >
-                    <IssueCard
-                      issue={issue}
-                      position={position}
-                      chartWidth={chartWidth}
-                      chartHeight={chartHeight}
-                      isDragging={draggingId === issue.id}
-                      compact={compactMode}
-                    />
-                  </g>
-                ))}
+                {positionedIssues
+                  .filter(({ issue }) => issue.id !== hoveredIssueId)
+                  .map(({ issue, position }) => (
+                    <g
+                      key={issue.id}
+                      onMouseDown={() => handleDragStart(issue.id)}
+                      onMouseEnter={() => setHoveredIssueId(issue.id)}
+                      onMouseLeave={() => setHoveredIssueId(null)}
+                      style={{ cursor: "move" }}
+                    >
+                      <IssueCard
+                        issue={issue}
+                        position={position}
+                        chartWidth={chartWidth}
+                        chartHeight={chartHeight}
+                        isDragging={draggingId === issue.id}
+                        compact={compactMode}
+                      />
+                    </g>
+                  ))}
+                {/* Render hovered card last so it paints on top */}
+                {hoveredIssueId && (() => {
+                  const hovered = positionedIssues.find(({ issue }) => issue.id === hoveredIssueId);
+                  if (!hovered) return null;
+                  const { issue, position } = hovered;
+                  return (
+                    <g
+                      key={issue.id}
+                      onMouseDown={() => handleDragStart(issue.id)}
+                      onMouseLeave={() => setHoveredIssueId(null)}
+                      style={{ cursor: "move" }}
+                    >
+                      <IssueCard
+                        issue={issue}
+                        position={position}
+                        chartWidth={chartWidth}
+                        chartHeight={chartHeight}
+                        isDragging={draggingId === issue.id}
+                        compact={compactMode}
+                      />
+                    </g>
+                  );
+                })()}
 
                 <text
                   x={0}

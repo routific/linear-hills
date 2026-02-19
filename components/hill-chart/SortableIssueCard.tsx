@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ExternalLink } from "lucide-react";
@@ -20,6 +21,9 @@ export function SortableIssueCard({ issue, compact = false }: SortableIssueCardP
     isDragging,
   } = useSortable({ id: issue.id });
 
+  const [hovered, setHovered] = useState(false);
+  const showFull = !compact || hovered;
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -34,15 +38,18 @@ export function SortableIssueCard({ issue, compact = false }: SortableIssueCardP
       {...listeners}
       className={cn(
         "group rounded-xl border border-border/50 bg-card/60 shadow-sm backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 cursor-move select-none",
-        compact ? "px-2 py-1.5" : "p-3"
+        compact && !hovered ? "px-2 py-1.5" : "p-3",
+        compact && hovered && "relative z-10"
       )}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <div className={cn("flex items-center gap-2", !compact && "mb-2 items-start justify-between")}>
+      <div className={cn("flex items-center gap-2", showFull && "mb-2 items-start justify-between")}>
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="truncate text-xs font-semibold text-foreground transition-colors group-hover:text-primary">
             {issue.identifier}
           </span>
-          {!compact && (
+          {showFull && (
             <a
               href={issue.url}
               target="_blank"
@@ -72,7 +79,7 @@ export function SortableIssueCard({ issue, compact = false }: SortableIssueCardP
         )}
       </div>
 
-      {!compact && (
+      {showFull && (
         <>
           <p className="mb-2 line-clamp-2 text-xs leading-snug text-muted-foreground">
             {issue.title}
