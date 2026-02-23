@@ -27,10 +27,12 @@ export function useWorkspaceData() {
 
       return response.json();
     },
-    // Poll every 20 seconds for updates from other users
-    refetchInterval: 20000,
-    // Consider data stale after 15 seconds
-    staleTime: 15000,
+    // Poll every 60 seconds for updates from other users
+    refetchInterval: 60000,
+    // Consider data stale after 45 seconds
+    staleTime: 45000,
+    // Don't poll when tab is hidden
+    refetchIntervalInBackground: false,
     // Refetch when user returns to tab
     refetchOnWindowFocus: true,
     // Only fetch if authenticated

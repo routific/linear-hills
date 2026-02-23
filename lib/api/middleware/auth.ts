@@ -63,11 +63,14 @@ export async function authenticateRequest(): Promise<AuthContext> {
       throw new AuthenticationError('Not a member of this workspace', 403);
     }
 
-    // Update last seen timestamp
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastSeenAt: new Date() },
-    });
+    // Update last seen timestamp (throttled to once every 5 minutes)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    if (!user.lastSeenAt || user.lastSeenAt < fiveMinutesAgo) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastSeenAt: new Date() },
+      });
+    }
 
     return {
       user,

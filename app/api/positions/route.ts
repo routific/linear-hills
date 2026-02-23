@@ -16,33 +16,68 @@ export async function POST(request: NextRequest) {
     // Validate position data
     const validatedData = IssuePositionSchema.parse(body);
 
-    // Verify project belongs to workspace
-    const project = await prisma.project.findFirst({
+    // Verify project belongs to workspace and update activity in one query
+    // Returns null if project doesn't exist or doesn't belong to workspace
+    const now = new Date();
+    const project = await prisma.project.updateMany({
       where: {
         id: validatedData.projectId,
         workspaceId: workspace.id,
       },
+      data: {
+        lastActivityAt: now,
+        lastActivityByUserId: user.id,
+      },
     });
 
-    if (!project) {
+    if (project.count === 0) {
       return NextResponse.json(
         { error: 'Project not found or access denied' },
         { status: 404 }
       );
     }
 
-    // Check for conflicts (last-write-wins with timestamp)
-    const existing = await prisma.issuePosition.findUnique({
-      where: {
-        issueId_projectId: {
+    // Check for conflicts and upsert in a single transaction
+    const position = await prisma.$transaction(async (tx) => {
+      const existing = await tx.issuePosition.findUnique({
+        where: {
+          issueId_projectId: {
+            issueId: validatedData.issueId,
+            projectId: validatedData.projectId,
+          },
+        },
+      });
+
+      if (existing && new Date(existing.lastUpdated) > new Date(validatedData.lastUpdated)) {
+        return { conflict: true, existing } as const;
+      }
+
+      const result = await tx.issuePosition.upsert({
+        where: {
+          issueId_projectId: {
+            issueId: validatedData.issueId,
+            projectId: validatedData.projectId,
+          },
+        },
+        create: {
           issueId: validatedData.issueId,
           projectId: validatedData.projectId,
+          xPosition: validatedData.xPosition,
+          notes: validatedData.notes,
+          lastUpdated: now,
         },
-      },
+        update: {
+          xPosition: validatedData.xPosition,
+          notes: validatedData.notes,
+          lastUpdated: now,
+        },
+      });
+
+      return { conflict: false, result } as const;
     });
 
-    if (existing && new Date(existing.lastUpdated) > new Date(validatedData.lastUpdated)) {
-      // Server version is newer, reject update
+    if (position.conflict) {
+      const { existing } = position;
       return NextResponse.json(
         {
           error: 'Conflict',
@@ -58,44 +93,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upsert position with current timestamp
-    const now = new Date();
-    const position = await prisma.issuePosition.upsert({
-      where: {
-        issueId_projectId: {
-          issueId: validatedData.issueId,
-          projectId: validatedData.projectId,
-        },
-      },
-      create: {
-        issueId: validatedData.issueId,
-        projectId: validatedData.projectId,
-        xPosition: validatedData.xPosition,
-        notes: validatedData.notes,
-        lastUpdated: now,
-      },
-      update: {
-        xPosition: validatedData.xPosition,
-        notes: validatedData.notes,
-        lastUpdated: now,
-      },
-    });
-
-    // Update project's last activity
-    await prisma.project.update({
-      where: { id: validatedData.projectId },
-      data: {
-        lastActivityAt: now,
-        lastActivityByUserId: user.id,
-      },
-    });
-
+    const { result } = position;
     return NextResponse.json({
-      issueId: position.issueId,
-      projectId: position.projectId,
-      xPosition: position.xPosition,
-      notes: position.notes || undefined,
-      lastUpdated: position.lastUpdated.toISOString(),
+      issueId: result.issueId,
+      projectId: result.projectId,
+      xPosition: result.xPosition,
+      notes: result.notes || undefined,
+      lastUpdated: result.lastUpdated.toISOString(),
     });
   } catch (error) {
     if (error instanceof AuthenticationError) {

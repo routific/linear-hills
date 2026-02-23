@@ -16,23 +16,27 @@ export async function POST(request: NextRequest) {
     // Validate parking lot order data
     const validatedData = ParkingLotOrderSchema.parse(body);
 
-    // Verify project belongs to workspace
-    const project = await prisma.project.findFirst({
+    // Verify project belongs to workspace and update activity in one query
+    const now = new Date();
+    const project = await prisma.project.updateMany({
       where: {
         id: validatedData.projectId,
         workspaceId: workspace.id,
       },
+      data: {
+        lastActivityAt: now,
+        lastActivityByUserId: user.id,
+      },
     });
 
-    if (!project) {
+    if (project.count === 0) {
       return NextResponse.json(
         { error: 'Project not found or access denied' },
         { status: 404 }
       );
     }
 
-    // Upsert parking lot order with current timestamp
-    const now = new Date();
+    // Upsert parking lot order
     const order = await prisma.parkingLotOrder.upsert({
       where: {
         projectId_side: {
@@ -49,15 +53,6 @@ export async function POST(request: NextRequest) {
       update: {
         issueIds: validatedData.issueIds,
         lastUpdated: now,
-      },
-    });
-
-    // Update project's last activity
-    await prisma.project.update({
-      where: { id: validatedData.projectId },
-      data: {
-        lastActivityAt: now,
-        lastActivityByUserId: user.id,
       },
     });
 
