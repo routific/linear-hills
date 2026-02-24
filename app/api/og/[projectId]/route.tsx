@@ -38,9 +38,9 @@ function hillPositionToScreen(
   };
 }
 
-const CHART_WIDTH = 800;
+const CHART_WIDTH = 780;
 const CHART_HEIGHT = 210;
-const SIDE_PANEL_WIDTH = 120;
+const SIDE_PANEL_WIDTH = 130;
 
 export async function GET(
   _request: Request,
@@ -78,7 +78,7 @@ export async function GET(
       >
         {/* Header: app name + project info */}
         <div style={{ display: "flex", flexDirection: "column", marginBottom: 28 }}>
-          <div style={{ color: "#6b7280", fontSize: 12, letterSpacing: "0.1em", marginBottom: 10, display: "flex" }}>
+          <div style={{ color: "#6b7280", fontSize: 14, letterSpacing: "0.1em", marginBottom: 10, display: "flex" }}>
             LINEAR HILL CHARTS
           </div>
           <div style={{ color: "#f9fafb", fontSize: 40, fontWeight: 700, lineHeight: 1.15, display: "flex" }}>
@@ -111,11 +111,11 @@ export async function GET(
               padding: "16px 8px",
             }}
           >
-            <div style={{ color: "#f9fafb", fontSize: 36, fontWeight: 700, display: "flex" }}>
+            <div style={{ color: "#f9fafb", fontSize: 44, fontWeight: 700, display: "flex" }}>
               {backlogCount}
             </div>
-            <div style={{ color: "#6b7280", fontSize: 12, marginTop: 6, textAlign: "center", display: "flex" }}>
-              in backlog
+            <div style={{ color: "#9ca3af", fontSize: 16, marginTop: 8, textAlign: "center", display: "flex" }}>
+              not started
             </div>
           </div>
 
@@ -161,7 +161,7 @@ export async function GET(
                     CHART_HEIGHT
                   );
                   return (
-                    <circle key={pos.issueId} cx={x} cy={y} r="6" fill="#8b5cf6" opacity="0.9" />
+                    <circle key={pos.issueId} cx={x} cy={y} r="8" fill="#8b5cf6" opacity="0.9" />
                   );
                 })}
               </svg>
@@ -174,20 +174,24 @@ export async function GET(
                   CHART_WIDTH,
                   CHART_HEIGHT
                 );
-                const labelWidth = 56;
+                const labelWidth = 96;
                 return (
                   <div
                     key={pos.issueId}
                     style={{
                       position: "absolute",
                       left: x - labelWidth / 2,
-                      top: y - 24,
+                      top: y - 44,
                       width: labelWidth,
                       display: "flex",
                       justifyContent: "center",
-                      color: "#c4b5fd",
-                      fontSize: 10,
-                      fontWeight: 600,
+                      alignItems: "center",
+                      backgroundColor: "rgba(10,10,10,0)",
+                      borderRadius: 5,
+                      padding: "3px 8px",
+                      color: "#f9fafb",
+                      fontSize: 20,
+                      fontWeight: 700,
                     }}
                   >
                     {pos.issueIdentifier}
@@ -201,9 +205,9 @@ export async function GET(
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginTop: 10,
-                color: "#4b5563",
-                fontSize: 12,
+                marginTop: 12,
+                color: "#9ca3af",
+                fontSize: 16,
               }}
             >
               <span>Figuring it out</span>
@@ -226,10 +230,10 @@ export async function GET(
               padding: "16px 8px",
             }}
           >
-            <div style={{ color: "#f9fafb", fontSize: 36, fontWeight: 700, display: "flex" }}>
+            <div style={{ color: "#f9fafb", fontSize: 44, fontWeight: 700, display: "flex" }}>
               {completedCount}
             </div>
-            <div style={{ color: "#6b7280", fontSize: 12, marginTop: 6, textAlign: "center", display: "flex" }}>
+            <div style={{ color: "#9ca3af", fontSize: 16, marginTop: 8, textAlign: "center", display: "flex" }}>
               completed
             </div>
           </div>
@@ -240,12 +244,12 @@ export async function GET(
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: 10,
             marginTop: 16,
             paddingTop: 14,
             borderTop: "1px solid #1f2937",
-            color: "#6b7280",
-            fontSize: 13,
+            color: "#9ca3af",
+            fontSize: 16,
           }}
         >
           <span>
