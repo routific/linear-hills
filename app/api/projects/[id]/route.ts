@@ -44,6 +44,8 @@ export async function PATCH(
         linearProjectName: body.linearProjectName,
         labelFilter: body.labelFilter,
         color: body.color,
+        cachedBacklogCount: body.cachedBacklogCount,
+        cachedCompletedCount: body.cachedCompletedCount,
       },
     });
 

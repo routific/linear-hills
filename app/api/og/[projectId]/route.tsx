@@ -38,8 +38,9 @@ function hillPositionToScreen(
   };
 }
 
-const CHART_WIDTH = 1080;
-const CHART_HEIGHT = 230;
+const CHART_WIDTH = 800;
+const CHART_HEIGHT = 210;
+const SIDE_PANEL_WIDTH = 120;
 
 export async function GET(
   _request: Request,
@@ -59,6 +60,9 @@ export async function GET(
   const hillPath = generateHillPath(CHART_WIDTH, CHART_HEIGHT);
   const filledPath = `${hillPath} L ${CHART_WIDTH} ${CHART_HEIGHT} L 0 ${CHART_HEIGHT} Z`;
 
+  const backlogCount = project.cachedBacklogCount;
+  const completedCount = project.cachedCompletedCount;
+
   return new ImageResponse(
     (
       <div
@@ -68,131 +72,180 @@ export async function GET(
           backgroundColor: "#0a0a0a",
           display: "flex",
           flexDirection: "column",
-          padding: "60px",
+          padding: "52px 60px 44px",
           fontFamily: "sans-serif",
         }}
       >
-        {/* App name */}
-        <div
-          style={{
-            color: "#6b7280",
-            fontSize: 13,
-            letterSpacing: "0.08em",
-            marginBottom: 24,
-            display: "flex",
-          }}
-        >
-          LINEAR HILL CHARTS
+        {/* Header: app name + project info */}
+        <div style={{ display: "flex", flexDirection: "column", marginBottom: 28 }}>
+          <div style={{ color: "#6b7280", fontSize: 12, letterSpacing: "0.1em", marginBottom: 10, display: "flex" }}>
+            LINEAR HILL CHARTS
+          </div>
+          <div style={{ color: "#f9fafb", fontSize: 40, fontWeight: 700, lineHeight: 1.15, display: "flex" }}>
+            {project.name}
+          </div>
+          {project.description && (
+            <div style={{ color: "#9ca3af", fontSize: 17, marginTop: 6, display: "flex" }}>
+              {project.description.length > 90
+                ? project.description.slice(0, 90) + "…"
+                : project.description}
+            </div>
+          )}
         </div>
 
-        {/* Project name */}
-        <div
-          style={{
-            color: "#f9fafb",
-            fontSize: 44,
-            fontWeight: 700,
-            lineHeight: 1.15,
-            marginBottom: project.description ? 10 : 0,
-            display: "flex",
-          }}
-        >
-          {project.name}
-        </div>
+        {/* Chart row: [backlog panel] [hill svg] [completed panel] */}
+        <div style={{ display: "flex", flex: 1, alignItems: "stretch", gap: 16 }}>
 
-        {/* Description */}
-        {project.description && (
+          {/* Left panel: backlog count */}
           <div
             style={{
-              color: "#9ca3af",
-              fontSize: 18,
-              marginBottom: 0,
+              width: SIDE_PANEL_WIDTH,
+              minWidth: SIDE_PANEL_WIDTH,
               display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#111827",
+              borderRadius: 12,
+              border: "1px solid #1f2937",
+              padding: "16px 8px",
             }}
           >
-            {project.description.length > 100
-              ? project.description.slice(0, 100) + "…"
-              : project.description}
+            <div style={{ color: "#f9fafb", fontSize: 36, fontWeight: 700, display: "flex" }}>
+              {backlogCount}
+            </div>
+            <div style={{ color: "#6b7280", fontSize: 12, marginTop: 6, textAlign: "center", display: "flex" }}>
+              in backlog
+            </div>
           </div>
-        )}
 
-        {/* Spacer */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", paddingBottom: 12 }}>
-          {/* Hill chart SVG */}
-          <svg
-            width={CHART_WIDTH}
-            height={CHART_HEIGHT}
-            viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-          >
-            {/* Filled area under curve */}
-            <path d={filledPath} fill="rgba(139,92,246,0.12)" />
+          {/* Hill chart */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+            {/* Relative container so identifier labels can be absolutely positioned over the SVG */}
+            <div style={{ position: "relative", width: CHART_WIDTH, height: CHART_HEIGHT, display: "flex" }}>
+              <svg
+                width={CHART_WIDTH}
+                height={CHART_HEIGHT}
+                viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+                style={{ position: "absolute", top: 0, left: 0 }}
+              >
+                {/* Filled area under curve */}
+                <path d={filledPath} fill="rgba(139,92,246,0.12)" />
 
-            {/* Curve outline */}
-            <path
-              d={hillPath}
-              fill="none"
-              stroke="#8b5cf6"
-              strokeWidth="2.5"
-              strokeOpacity="0.6"
-            />
-
-            {/* Center divider */}
-            <line
-              x1={CHART_WIDTH / 2}
-              y1="0"
-              x2={CHART_WIDTH / 2}
-              y2={CHART_HEIGHT}
-              stroke="#8b5cf6"
-              strokeWidth="1.5"
-              strokeOpacity="0.2"
-              strokeDasharray="6 6"
-            />
-
-            {/* Issue dots */}
-            {project.issuePositions.map((pos) => {
-              const { x, y } = hillPositionToScreen(
-                pos.xPosition,
-                CHART_WIDTH,
-                CHART_HEIGHT
-              );
-              return (
-                <circle
-                  key={pos.issueId}
-                  cx={x}
-                  cy={y}
-                  r="7"
-                  fill="#8b5cf6"
-                  opacity="0.9"
+                {/* Curve outline */}
+                <path
+                  d={hillPath}
+                  fill="none"
+                  stroke="#8b5cf6"
+                  strokeWidth="2.5"
+                  strokeOpacity="0.6"
                 />
-              );
-            })}
-          </svg>
 
-          {/* X-axis labels */}
+                {/* Center divider */}
+                <line
+                  x1={CHART_WIDTH / 2}
+                  y1="0"
+                  x2={CHART_WIDTH / 2}
+                  y2={CHART_HEIGHT}
+                  stroke="#8b5cf6"
+                  strokeWidth="1.5"
+                  strokeOpacity="0.2"
+                  strokeDasharray="6 6"
+                />
+
+                {/* Issue dots — no <text> allowed in Satori SVG */}
+                {project.issuePositions.map((pos) => {
+                  const { x, y } = hillPositionToScreen(
+                    pos.xPosition,
+                    CHART_WIDTH,
+                    CHART_HEIGHT
+                  );
+                  return (
+                    <circle key={pos.issueId} cx={x} cy={y} r="6" fill="#8b5cf6" opacity="0.9" />
+                  );
+                })}
+              </svg>
+
+              {/* Identifier labels as absolutely positioned divs over the SVG */}
+              {project.issuePositions.map((pos) => {
+                if (!pos.issueIdentifier) return null;
+                const { x, y } = hillPositionToScreen(
+                  pos.xPosition,
+                  CHART_WIDTH,
+                  CHART_HEIGHT
+                );
+                const labelWidth = 56;
+                return (
+                  <div
+                    key={pos.issueId}
+                    style={{
+                      position: "absolute",
+                      left: x - labelWidth / 2,
+                      top: y - 24,
+                      width: labelWidth,
+                      display: "flex",
+                      justifyContent: "center",
+                      color: "#c4b5fd",
+                      fontSize: 10,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {pos.issueIdentifier}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* X-axis labels */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: 10,
+                color: "#4b5563",
+                fontSize: 12,
+              }}
+            >
+              <span>Figuring it out</span>
+              <span>Making it happen</span>
+            </div>
+          </div>
+
+          {/* Right panel: completed count */}
           <div
             style={{
+              width: SIDE_PANEL_WIDTH,
+              minWidth: SIDE_PANEL_WIDTH,
               display: "flex",
-              justifyContent: "space-between",
-              marginTop: 10,
-              color: "#4b5563",
-              fontSize: 13,
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#111827",
+              borderRadius: 12,
+              border: "1px solid #1f2937",
+              padding: "16px 8px",
             }}
           >
-            <span>Figuring it out</span>
-            <span>Making it happen</span>
+            <div style={{ color: "#f9fafb", fontSize: 36, fontWeight: 700, display: "flex" }}>
+              {completedCount}
+            </div>
+            <div style={{ color: "#6b7280", fontSize: 12, marginTop: 6, textAlign: "center", display: "flex" }}>
+              completed
+            </div>
           </div>
         </div>
 
-        {/* Footer stats */}
+        {/* Footer */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: 8,
-            marginTop: 20,
-            paddingTop: 16,
+            marginTop: 16,
+            paddingTop: 14,
             borderTop: "1px solid #1f2937",
             color: "#6b7280",
-            fontSize: 14,
+            fontSize: 13,
           }}
         >
           <span>
