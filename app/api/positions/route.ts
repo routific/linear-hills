@@ -61,12 +61,14 @@ export async function POST(request: NextRequest) {
         },
         create: {
           issueId: validatedData.issueId,
+          issueIdentifier: validatedData.issueIdentifier,
           projectId: validatedData.projectId,
           xPosition: validatedData.xPosition,
           notes: validatedData.notes,
           lastUpdated: now,
         },
         update: {
+          issueIdentifier: validatedData.issueIdentifier,
           xPosition: validatedData.xPosition,
           notes: validatedData.notes,
           lastUpdated: now,

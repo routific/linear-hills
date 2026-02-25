@@ -96,6 +96,19 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
     }
   }, [projectId]);
 
+  // Cache backlog/completed counts on the project for OG image accuracy
+  useEffect(() => {
+    if (!isAuthenticated || !issues) return;
+    fetch(`/api/projects/${projectId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cachedBacklogCount: backlogIssues.length,
+        cachedCompletedCount: doneIssues.length,
+      }),
+    }).catch(() => {});
+  }, [backlogIssues.length, doneIssues.length, isAuthenticated, issues, projectId]);
+
   // Save to localStorage when state changes
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -188,8 +201,10 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
 
   const handleDragEnd = useCallback(() => {
     if (draggingId && tempPositions[draggingId] !== undefined) {
+      const draggingIssue = positionedIssues.find(({ issue }) => issue.id === draggingId);
       const position = {
         issueId: draggingId,
+        issueIdentifier: draggingIssue?.issue.identifier,
         projectId,
         xPosition: tempPositions[draggingId],
         lastUpdated: new Date().toISOString(),
@@ -205,7 +220,7 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
 
     setDraggingId(null);
     setTempPositions({});
-  }, [draggingId, tempPositions, projectId, isAuthenticated, updatePositionMutation, updateIssuePositionStore]);
+  }, [draggingId, tempPositions, projectId, isAuthenticated, updatePositionMutation, updateIssuePositionStore, positionedIssues]);
 
   if (isLoading) {
     return (

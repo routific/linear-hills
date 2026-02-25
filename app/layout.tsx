@@ -6,6 +6,7 @@ import { Providers } from "@/components/layout/Providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3010"),
   title: "Linear Hill Charts",
   description: "Visualize Linear issues as interactive hill charts",
 };

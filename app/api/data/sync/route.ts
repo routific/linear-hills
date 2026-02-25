@@ -50,6 +50,7 @@ export async function GET() {
       (acc, pos) => {
         acc[pos.issueId] = {
           issueId: pos.issueId,
+          issueIdentifier: pos.issueIdentifier || undefined,
           projectId: pos.projectId,
           xPosition: pos.xPosition,
           notes: pos.notes || undefined,

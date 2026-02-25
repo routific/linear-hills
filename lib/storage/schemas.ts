@@ -17,6 +17,7 @@ export const ProjectSchema = z.object({
 
 export const IssuePositionSchema = z.object({
   issueId: z.string().min(1),
+  issueIdentifier: z.string().optional(),
   projectId: z.string().uuid(),
   xPosition: z.number().min(0).max(100),
   lastUpdated: z.string(),

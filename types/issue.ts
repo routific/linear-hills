@@ -28,6 +28,7 @@ export interface LinearIssue {
 
 export interface IssuePosition {
   issueId: string;
+  issueIdentifier?: string;
   projectId: string;
   xPosition: number;
   lastUpdated: string;

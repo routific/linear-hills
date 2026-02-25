@@ -65,6 +65,8 @@ model Project {
   updatedAt           DateTime          @updatedAt
   lastActivityAt      DateTime          @default(now())
   lastActivityByUserId String?
+  cachedBacklogCount  Int               @default(0)
+  cachedCompletedCount Int              @default(0)
   workspace           Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   lastActivityBy      User?             @relation(fields: [lastActivityByUserId], references: [id], onDelete: SetNull)
   issuePositions      IssuePosition[]
@@ -76,13 +78,14 @@ model Project {
 }
 
 model IssuePosition {
-  id          String   @id @default(uuid())
-  issueId     String
-  projectId   String
-  xPosition   Float
-  notes       String?
-  lastUpdated DateTime @default(now())
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  issueId         String
+  issueIdentifier String?
+  projectId       String
+  xPosition       Float
+  notes           String?
+  lastUpdated     DateTime @default(now())
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([issueId, projectId])
   @@index([projectId])

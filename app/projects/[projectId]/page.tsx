@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, Link2, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { HillChart } from "@/components/hill-chart/HillChart";
@@ -19,6 +19,7 @@ export default function ProjectPage({
 }) {
   const router = useRouter();
   const resolvedParams = use(params);
+  const [copied, setCopied] = useState(false);
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const storeProjects = useAppStore((state) => state.projects);
   const lastSync = useAppStore((state) => state.lastSync);
@@ -72,6 +73,12 @@ export default function ProjectPage({
     setLastSync(new Date().toISOString());
   };
 
+  const handleCopyUrl = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 backdrop-blur-sm bg-background/95 sticky top-0 z-50">
@@ -86,18 +93,33 @@ export default function ProjectPage({
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Hillcharts
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSync}
-              disabled={isFetching}
-              className="border-border/50 shadow-sm"
-            >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
-              />
-              {isFetching ? "Syncing..." : "Sync"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyUrl}
+                className="border-border/50 shadow-sm"
+              >
+                {copied ? (
+                  <Check className="mr-2 h-4 w-4 text-green-500" />
+                ) : (
+                  <Link2 className="mr-2 h-4 w-4" />
+                )}
+                {copied ? "Copied!" : "Copy URL"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSync}
+                disabled={isFetching}
+                className="border-border/50 shadow-sm"
+              >
+                <RefreshCw
+                  className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+                />
+                {isFetching ? "Syncing..." : "Sync"}
+              </Button>
+            </div>
           </div>
 
           <div>
