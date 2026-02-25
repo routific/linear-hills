@@ -40,6 +40,7 @@ function hillPositionToScreen(
 
 const CHART_WIDTH = 780;
 const CHART_HEIGHT = 210;
+const CHART_TOP_PADDING = 36; // room above hill peak so dots/labels aren't clipped
 const SIDE_PANEL_WIDTH = 130;
 const DOT_RADIUS = 8;
 const LABEL_WIDTH = 100;
@@ -126,12 +127,12 @@ export async function GET(
           {/* Hill chart */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
             {/* Relative container for SVG + absolutely positioned label divs */}
-            <div style={{ position: "relative", width: CHART_WIDTH, height: CHART_HEIGHT, display: "flex" }}>
+            <div style={{ position: "relative", width: CHART_WIDTH, height: CHART_HEIGHT + CHART_TOP_PADDING, display: "flex" }}>
               <svg
                 width={CHART_WIDTH}
-                height={CHART_HEIGHT}
-                viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-                style={{ position: "absolute", top: 0, left: 0, overflow: "visible" }}
+                height={CHART_HEIGHT + CHART_TOP_PADDING}
+                viewBox={`0 ${-CHART_TOP_PADDING} ${CHART_WIDTH} ${CHART_HEIGHT + CHART_TOP_PADDING}`}
+                style={{ position: "absolute", top: 0, left: 0 }}
               >
                 {/* Filled area under curve */}
                 <path d={filledPath} fill="rgba(139,92,246,0.12)" />
@@ -166,7 +167,7 @@ export async function GET(
                 })}
               </svg>
 
-              {/* Identifier labels — horizontally beside each dot, side determined by hill position */}
+              {/* Identifier labels — above pin when near the peak, beside pin on the slopes */}
               {project.issuePositions.map((pos) => {
                 if (!pos.issueIdentifier) return null;
                 const { x: dotX, y: dotY } = hillPositionToScreen(
@@ -174,11 +175,20 @@ export async function GET(
                   CHART_WIDTH,
                   CHART_HEIGHT
                 );
+                // hillY is 0-100; 100 = peak. Labels go above when near the top, to the side on slopes.
+                const hillY = calculateHillY(pos.xPosition);
+                const isNearPeak = hillY > 82;
                 const isLeftSide = pos.xPosition < 50;
-                const labelLeft = isLeftSide
-                  ? dotX - DOT_RADIUS - DOT_LABEL_GAP - LABEL_WIDTH
-                  : dotX + DOT_RADIUS + DOT_LABEL_GAP;
-                const labelTop = dotY - LABEL_HEIGHT / 2;
+
+                const labelLeft = isNearPeak
+                  ? dotX - LABEL_WIDTH / 2                                      // centered above
+                  : isLeftSide
+                    ? dotX - DOT_RADIUS - DOT_LABEL_GAP - LABEL_WIDTH           // left of dot
+                    : dotX + DOT_RADIUS + DOT_LABEL_GAP;                        // right of dot
+
+                const labelTop = isNearPeak
+                  ? CHART_TOP_PADDING + dotY - DOT_RADIUS - LABEL_HEIGHT - 4   // just above dot
+                  : CHART_TOP_PADDING + dotY - LABEL_HEIGHT / 2;                // vertically centered
 
                 return (
                   <div
@@ -190,7 +200,7 @@ export async function GET(
                       width: LABEL_WIDTH,
                       height: LABEL_HEIGHT,
                       display: "flex",
-                      justifyContent: isLeftSide ? "flex-end" : "flex-start",
+                      justifyContent: isNearPeak ? "center" : isLeftSide ? "flex-end" : "flex-start",
                       alignItems: "center",
                       color: "#f9fafb",
                       fontSize: 18,
