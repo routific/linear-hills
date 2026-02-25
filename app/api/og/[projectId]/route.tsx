@@ -41,6 +41,10 @@ function hillPositionToScreen(
 const CHART_WIDTH = 780;
 const CHART_HEIGHT = 210;
 const SIDE_PANEL_WIDTH = 130;
+const DOT_RADIUS = 8;
+const LABEL_WIDTH = 100;
+const LABEL_HEIGHT = 26;
+const DOT_LABEL_GAP = 10; // horizontal gap between dot edge and label edge
 
 export async function GET(
   _request: Request,
@@ -121,13 +125,13 @@ export async function GET(
 
           {/* Hill chart */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-            {/* Relative container so identifier labels can be absolutely positioned over the SVG */}
+            {/* Relative container for SVG + absolutely positioned label divs */}
             <div style={{ position: "relative", width: CHART_WIDTH, height: CHART_HEIGHT, display: "flex" }}>
               <svg
                 width={CHART_WIDTH}
                 height={CHART_HEIGHT}
                 viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-                style={{ position: "absolute", top: 0, left: 0 }}
+                style={{ position: "absolute", top: 0, left: 0, overflow: "visible" }}
               >
                 {/* Filled area under curve */}
                 <path d={filledPath} fill="rgba(139,92,246,0.12)" />
@@ -153,44 +157,43 @@ export async function GET(
                   strokeDasharray="6 6"
                 />
 
-                {/* Issue dots — no <text> allowed in Satori SVG */}
+                {/* Issue dots */}
                 {project.issuePositions.map((pos) => {
-                  const { x, y } = hillPositionToScreen(
-                    pos.xPosition,
-                    CHART_WIDTH,
-                    CHART_HEIGHT
-                  );
+                  const { x, y } = hillPositionToScreen(pos.xPosition, CHART_WIDTH, CHART_HEIGHT);
                   return (
-                    <circle key={pos.issueId} cx={x} cy={y} r="8" fill="#8b5cf6" opacity="0.9" />
+                    <circle key={pos.issueId} cx={x} cy={y} r={DOT_RADIUS} fill="#8b5cf6" opacity="0.9" />
                   );
                 })}
               </svg>
 
-              {/* Identifier labels as absolutely positioned divs over the SVG */}
+              {/* Identifier labels — horizontally beside each dot, side determined by hill position */}
               {project.issuePositions.map((pos) => {
                 if (!pos.issueIdentifier) return null;
-                const { x, y } = hillPositionToScreen(
+                const { x: dotX, y: dotY } = hillPositionToScreen(
                   pos.xPosition,
                   CHART_WIDTH,
                   CHART_HEIGHT
                 );
-                const labelWidth = 96;
+                const isLeftSide = pos.xPosition < 50;
+                const labelLeft = isLeftSide
+                  ? dotX - DOT_RADIUS - DOT_LABEL_GAP - LABEL_WIDTH
+                  : dotX + DOT_RADIUS + DOT_LABEL_GAP;
+                const labelTop = dotY - LABEL_HEIGHT / 2;
+
                 return (
                   <div
                     key={pos.issueId}
                     style={{
                       position: "absolute",
-                      left: x - labelWidth / 2,
-                      top: y - 44,
-                      width: labelWidth,
+                      left: labelLeft,
+                      top: labelTop,
+                      width: LABEL_WIDTH,
+                      height: LABEL_HEIGHT,
                       display: "flex",
-                      justifyContent: "center",
+                      justifyContent: isLeftSide ? "flex-end" : "flex-start",
                       alignItems: "center",
-                      backgroundColor: "rgba(10,10,10,0)",
-                      borderRadius: 5,
-                      padding: "3px 8px",
                       color: "#f9fafb",
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: 700,
                     }}
                   >
