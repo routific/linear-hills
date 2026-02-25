@@ -96,9 +96,11 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
     }
   }, [projectId]);
 
-  // Cache backlog/completed counts on the project for OG image accuracy
+  // When issues load: update cached counts, clean up stale positions, backfill missing identifiers
   useEffect(() => {
     if (!isAuthenticated || !issues) return;
+
+    // 1. Cache backlog/completed counts for OG image
     fetch(`/api/projects/${projectId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -107,8 +109,33 @@ export function HillChart({ projectId, teamId, linearProjectId, labelFilter }: H
         cachedCompletedCount: doneIssues.length,
       }),
     }).catch(() => {});
-  }, [backlogIssues.length, doneIssues.length, isAuthenticated, issues, projectId]);
 
+    // 2. Remove positions for issues no longer in-progress
+    const activeIssueIds = inProgressIssues.map((i) => i.id);
+    fetch("/api/positions/cleanup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, activeIssueIds }),
+    }).catch(() => {});
+
+    // 3. Backfill issueIdentifier for existing positions that are missing it
+    inProgressIssues.forEach((issue) => {
+      const pos = issuePositions[issue.id];
+      if (pos && !pos.issueIdentifier) {
+        fetch("/api/positions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            issueId: issue.id,
+            issueIdentifier: issue.identifier,
+            projectId,
+            xPosition: pos.xPosition,
+            lastUpdated: new Date().toISOString(),
+          }),
+        }).catch(() => {});
+      }
+    });
+  }, [isAuthenticated, issues, projectId, inProgressIssues, backlogIssues.length, doneIssues.length, issuePositions]);
   // Save to localStorage when state changes
   useEffect(() => {
     if (typeof window === "undefined") return;
