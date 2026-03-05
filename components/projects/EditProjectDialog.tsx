@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { useLinearTeams } from "@/lib/hooks/useLinearTeams";
 import { useLinearProjects } from "@/lib/hooks/useLinearProjects";
 import { useLinearLabels } from "@/lib/hooks/useLinearLabels";
@@ -64,6 +65,31 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
       setLabelFilter(project.labelFilter);
     }
   }, [open, project]);
+
+  const projectOptions: ComboboxOption[] = useMemo(
+    () =>
+      projects?.map((p) => ({
+        value: p.id,
+        label: p.name,
+      })) ?? [],
+    [projects]
+  );
+
+  const labelOptions: ComboboxOption[] = useMemo(
+    () =>
+      labels?.map((l) => ({
+        value: l.name,
+        label: l.name,
+        group: l.groupName,
+        icon: (
+          <div
+            className="w-3 h-3 rounded-full shrink-0"
+            style={{ backgroundColor: l.color }}
+          />
+        ),
+      })) ?? [],
+    [labels]
+  );
 
   const handleSave = () => {
     if (!name.trim() || !selectedTeamId || !selectedProjectId || !labelFilter.trim()) {
@@ -169,32 +195,18 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
 
           <div className="grid gap-2">
             <Label htmlFor="edit-project">Linear Project</Label>
-            <Select
+            <Combobox
+              id="edit-project"
+              options={projectOptions}
               value={selectedProjectId}
               onValueChange={setSelectedProjectId}
+              placeholder="Select a project"
+              searchPlaceholder="Search projects..."
+              emptyMessage="No projects found"
+              loadingMessage="Loading projects..."
+              isLoading={isLoadingProjects}
               disabled={!selectedTeamId}
-            >
-              <SelectTrigger id="edit-project">
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingProjects && (
-                  <SelectItem value="loading" disabled>
-                    Loading projects...
-                  </SelectItem>
-                )}
-                {projects?.map((proj) => (
-                  <SelectItem key={proj.id} value={proj.id}>
-                    {proj.name}
-                  </SelectItem>
-                ))}
-                {!isLoadingProjects && projects?.length === 0 && selectedTeamId && (
-                  <SelectItem value="none" disabled>
-                    No projects found
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+            />
             <p className="text-xs text-muted-foreground">
               Select the Linear project to filter issues from
             </p>
@@ -202,38 +214,18 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
 
           <div className="grid gap-2">
             <Label htmlFor="edit-label">Label Filter</Label>
-            <Select
+            <Combobox
+              id="edit-label"
+              options={labelOptions}
               value={labelFilter}
               onValueChange={setLabelFilter}
+              placeholder="Select a label"
+              searchPlaceholder="Search labels..."
+              emptyMessage="No labels found"
+              loadingMessage="Loading labels..."
+              isLoading={isLoadingLabels}
               disabled={!selectedTeamId}
-            >
-              <SelectTrigger id="edit-label">
-                <SelectValue placeholder="Select a label" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingLabels && (
-                  <SelectItem value="loading" disabled>
-                    Loading labels...
-                  </SelectItem>
-                )}
-                {labels?.map((label) => (
-                  <SelectItem key={label.id} value={label.name}>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: label.color }}
-                      />
-                      {label.name}
-                    </div>
-                  </SelectItem>
-                ))}
-                {!isLoadingLabels && labels?.length === 0 && selectedTeamId && (
-                  <SelectItem value="none" disabled>
-                    No labels found
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+            />
             <p className="text-xs text-muted-foreground">
               Only issues with this label will appear on the hill chart
             </p>
