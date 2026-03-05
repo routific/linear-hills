@@ -56,7 +56,7 @@ export function Combobox({
   }, [options]);
 
   return (
-    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+    <PopoverPrimitive.Root open={open} onOpenChange={setOpen} modal={false}>
       <PopoverPrimitive.Trigger asChild disabled={disabled}>
         <button
           id={id}
@@ -81,12 +81,12 @@ export function Combobox({
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </button>
       </PopoverPrimitive.Trigger>
-      <PopoverPrimitive.Portal>
-        <PopoverPrimitive.Content
-          className="z-50 w-[var(--radix-popover-trigger-width)] rounded-md border bg-popover text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
-          sideOffset={4}
-          align="start"
-        >
+      <PopoverPrimitive.Content
+        className="z-50 w-[var(--radix-popover-trigger-width)] rounded-md border bg-popover text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+        sideOffset={4}
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
           <CommandPrimitive
             className="flex h-full w-full flex-col overflow-hidden"
             shouldFilter={true}
@@ -100,7 +100,7 @@ export function Combobox({
                 className="flex h-9 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
-            <CommandPrimitive.List className="max-h-[200px] overflow-y-auto p-1">
+            <CommandPrimitive.List className="max-h-[200px] p-1" style={{ overflowY: "auto" }}>
               {isLoading && (
                 <CommandPrimitive.Loading>
                   <div className="py-2 px-2 text-sm text-muted-foreground">
@@ -172,7 +172,6 @@ export function Combobox({
             </CommandPrimitive.List>
           </CommandPrimitive>
         </PopoverPrimitive.Content>
-      </PopoverPrimitive.Portal>
     </PopoverPrimitive.Root>
   );
 }
