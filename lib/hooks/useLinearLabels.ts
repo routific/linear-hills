@@ -1,3 +1,4 @@
+import type { IssueLabel, LinearClient } from "@linear/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { getLinearClient } from "../linear/client";
 
@@ -8,6 +9,55 @@ export interface LinearLabel {
   groupName?: string;
 }
 
+/** Label groups omitted from the picker (large/noisy groups; also saves API work). */
+const EXCLUDED_LABEL_GROUP_NAMES = new Set([
+  "Completed Release",
+  "Release",
+]);
+
+async function addLabelsFromRoots(
+  client: LinearClient,
+  roots: IssueLabel[],
+  labels: LinearLabel[],
+  seenIds: Set<string>
+) {
+  for (const label of roots) {
+    if (EXCLUDED_LABEL_GROUP_NAMES.has(label.name)) continue;
+
+    const childNodes = await client.paginate(
+      (vars) => label.children(vars),
+      { first: 100 }
+    );
+
+    if (childNodes.length > 0) {
+      for (const child of childNodes) {
+        if (EXCLUDED_LABEL_GROUP_NAMES.has(child.name)) continue;
+        if (!seenIds.has(child.id)) {
+          seenIds.add(child.id);
+          labels.push({
+            id: child.id,
+            name: child.name,
+            color: child.color,
+            groupName: label.name,
+          });
+        }
+      }
+    } else {
+      if (!seenIds.has(label.id)) {
+        const parent = await label.parent;
+        if (parent && EXCLUDED_LABEL_GROUP_NAMES.has(parent.name)) continue;
+        seenIds.add(label.id);
+        labels.push({
+          id: label.id,
+          name: label.name,
+          color: label.color,
+          groupName: parent?.name,
+        });
+      }
+    }
+  }
+}
+
 export function useLinearLabels(teamId: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ["linear-labels", teamId],
@@ -16,79 +66,25 @@ export function useLinearLabels(teamId: string, enabled: boolean = true) {
 
       const client = await getLinearClient();
 
-      // Fetch team labels
-      const team = await client.team(teamId);
-      const teamLabelsConnection = await team.labels();
-
       const labels: LinearLabel[] = [];
       const seenIds = new Set<string>();
 
-      for (const label of teamLabelsConnection.nodes) {
-        // Skip parent/group labels themselves — we only want leaf labels
-        const children = await label.children();
-        if (children.nodes.length > 0) {
-          // This is a group label — add its children with the group name
-          for (const child of children.nodes) {
-            if (!seenIds.has(child.id)) {
-              seenIds.add(child.id);
-              labels.push({
-                id: child.id,
-                name: child.name,
-                color: child.color,
-                groupName: label.name,
-              });
-            }
-          }
-        } else {
-          // Regular label (may or may not have a parent)
-          if (!seenIds.has(label.id)) {
-            seenIds.add(label.id);
-            const parent = await label.parent;
-            labels.push({
-              id: label.id,
-              name: label.name,
-              color: label.color,
-              groupName: parent?.name,
-            });
-          }
-        }
-      }
+      const team = await client.team(teamId);
+      const teamLabelNodes = await client.paginate(
+        (vars) => team.labels(vars),
+        { first: 100 }
+      );
+      await addLabelsFromRoots(client, teamLabelNodes, labels, seenIds);
 
-      // Also fetch workspace-level labels (not team-scoped)
-      const workspaceLabels = await client.issueLabels({
-        filter: {
-          team: { null: true },
-        },
-      });
-
-      for (const label of workspaceLabels.nodes) {
-        const children = await label.children();
-        if (children.nodes.length > 0) {
-          // Group label — add children
-          for (const child of children.nodes) {
-            if (!seenIds.has(child.id)) {
-              seenIds.add(child.id);
-              labels.push({
-                id: child.id,
-                name: child.name,
-                color: child.color,
-                groupName: label.name,
-              });
-            }
-          }
-        } else {
-          if (!seenIds.has(label.id)) {
-            seenIds.add(label.id);
-            const parent = await label.parent;
-            labels.push({
-              id: label.id,
-              name: label.name,
-              color: label.color,
-              groupName: parent?.name,
-            });
-          }
-        }
-      }
+      const workspaceLabelNodes = await client.paginate(
+        (vars) =>
+          client.issueLabels({
+            ...vars,
+            filter: { team: { null: true } },
+          }),
+        { first: 100 }
+      );
+      await addLabelsFromRoots(client, workspaceLabelNodes, labels, seenIds);
 
       // Sort: grouped labels first (by group name), then ungrouped
       labels.sort((a, b) => {
