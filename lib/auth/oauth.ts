@@ -47,7 +47,7 @@ export function getOAuthConfig(): OAuthConfig {
     redirectUri,
     authorizationUrl: 'https://linear.app/oauth/authorize',
     tokenUrl: 'https://api.linear.app/oauth/token',
-    scopes: ['read'], // Request minimal required scopes
+    scopes: ['read', 'write'], // read for issues/labels, write for external links on projects
   };
 }
 

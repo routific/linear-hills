@@ -7,7 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { HillChart } from "@/components/hill-chart/HillChart";
 import { useAppStore } from "@/lib/store/appStore";
-import { initializeLinearClient } from "@/lib/linear/client";
+import { initializeLinearClient, getLinearClient } from "@/lib/linear/client";
 import { useLinearIssues } from "@/lib/hooks/useLinearIssues";
 import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
 import { use } from "react";
@@ -68,8 +68,30 @@ export default function ProjectPage({
     );
   }
 
+  const ensureLinearProjectLink = async () => {
+    if (!project?.linearProjectId) return;
+    try {
+      const client = await getLinearClient();
+      const linearProject = await client.project(project.linearProjectId);
+      const existingLinks = await linearProject.externalLinks();
+      const hillchartUrl = `${window.location.origin}/projects/${project.id}`;
+      const alreadyLinked = existingLinks.nodes.some(
+        (link) => link.url === hillchartUrl
+      );
+      if (!alreadyLinked) {
+        await client.createEntityExternalLink({
+          projectId: project.linearProjectId,
+          label: `Hill chart: ${project.name}`,
+          url: hillchartUrl,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to ensure hillchart link on Linear project:", err);
+    }
+  };
+
   const handleSync = async () => {
-    await refetch();
+    await Promise.all([refetch(), ensureLinearProjectLink()]);
     setLastSync(new Date().toISOString());
   };
 

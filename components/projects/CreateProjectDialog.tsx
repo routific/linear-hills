@@ -27,6 +27,7 @@ import { useLinearProjects } from "@/lib/hooks/useLinearProjects";
 import { useLinearLabels } from "@/lib/hooks/useLinearLabels";
 import { useAppStore } from "@/lib/store/appStore";
 import { useCreateProject } from "@/lib/hooks/mutations/useProjectMutations";
+import { getLinearClient } from "@/lib/linear/client";
 import type { Project } from "@/types";
 
 interface CreateProjectDialogProps {
@@ -104,7 +105,21 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
 
     // Use mutation for authenticated users, store for unauthenticated
     if (isAuthenticated) {
-      createProjectMutation.mutate(project);
+      createProjectMutation.mutate(project, {
+        onSuccess: async () => {
+          try {
+            const client = await getLinearClient();
+            const hillchartUrl = `${window.location.origin}/projects/${project.id}`;
+            await client.createEntityExternalLink({
+              projectId: project.linearProjectId,
+              label: `Hill chart: ${project.name}`,
+              url: hillchartUrl,
+            });
+          } catch (err) {
+            console.error("Failed to add hillchart link to Linear project:", err);
+          }
+        },
+      });
     } else {
       addProjectStore(project);
     }

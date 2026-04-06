@@ -5,6 +5,7 @@ export interface LinearProject {
   id: string;
   name: string;
   key: string;
+  url: string;
 }
 
 export function useLinearProjects(teamId: string, enabled: boolean = true) {
@@ -21,6 +22,7 @@ export function useLinearProjects(teamId: string, enabled: boolean = true) {
         id: project.id,
         name: project.name,
         key: project.id,
+        url: project.url,
       }));
     },
     enabled: enabled && !!teamId,

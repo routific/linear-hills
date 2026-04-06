@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, Pencil, Folder, Tag, Users } from "lucide-react";
+import { Trash2, Pencil, Folder, Tag, Users, ExternalLink } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EditProjectDialog } from "./EditProjectDialog";
@@ -26,15 +26,15 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   // Fetch team and project names as fallback for older projects
   const { data: teams } = useLinearTeams(!project.linearTeamName);
-  const { data: projects } = useLinearProjects(project.linearTeamId, !project.linearProjectName);
+  const { data: projects } = useLinearProjects(project.linearTeamId, !!project.linearProjectId);
 
   const teamName = project.linearTeamName || 
                    teams?.find((t) => t.id === project.linearTeamId)?.name || 
                    project.linearTeamId;
                    
-  const projectName = project.linearProjectName || 
-                      projects?.find((p) => p.id === project.linearProjectId)?.name || 
-                      project.linearProjectId;
+  const linearProject = projects?.find((p) => p.id === project.linearProjectId);
+  const projectName = project.linearProjectName || linearProject?.name || project.linearProjectId;
+  const linearProjectUrl = linearProject?.url;
 
   const handleClick = () => {
     router.push(`/projects/${project.id}`);
@@ -112,9 +112,22 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <div className="flex items-center gap-2 text-xs">
               <Folder className="w-3.5 h-3.5 text-primary/70 flex-shrink-0" />
               <span className="text-muted-foreground min-w-[3rem]">Project:</span>
-              <span className="px-2 py-1 bg-primary/10 border border-primary/20 rounded-md font-medium text-primary">
-                {projectName}
-              </span>
+              {linearProjectUrl ? (
+                <a
+                  href={linearProjectUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/20 rounded-md font-medium text-primary hover:bg-primary/20 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {projectName}
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              ) : (
+                <span className="px-2 py-1 bg-primary/10 border border-primary/20 rounded-md font-medium text-primary">
+                  {projectName}
+                </span>
+              )}
             </div>
           )}
 
