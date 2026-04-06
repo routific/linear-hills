@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Command as CommandPrimitive } from "cmdk";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export interface ComboboxOption {
@@ -62,6 +62,7 @@ export function Combobox({
           id={id}
           role="combobox"
           aria-expanded={open}
+          aria-busy={isLoading}
           className={cn(
             "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
             !value && "text-muted-foreground"
@@ -78,7 +79,14 @@ export function Combobox({
               placeholder
             )}
           </span>
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          {isLoading ? (
+            <Loader2
+              className="ml-2 h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+              aria-hidden
+            />
+          ) : (
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" aria-hidden />
+          )}
         </button>
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Content
@@ -103,7 +111,15 @@ export function Combobox({
             <CommandPrimitive.List className="max-h-[200px] p-1" style={{ overflowY: "auto" }}>
               {isLoading && (
                 <CommandPrimitive.Loading>
-                  <div className="py-2 px-2 text-sm text-muted-foreground">
+                  <div
+                    className="flex items-center gap-2 py-2 px-2 text-sm text-muted-foreground"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <Loader2
+                      className="h-4 w-4 shrink-0 animate-spin"
+                      aria-hidden
+                    />
                     {loadingMessage}
                   </div>
                 </CommandPrimitive.Loading>
