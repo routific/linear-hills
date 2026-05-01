@@ -24,11 +24,14 @@ export default function ProjectsPage() {
     ? workspaceData.projects
     : storeProjects;
 
-  const teamIds = useMemo(
-    () => projects.map((p) => p.linearTeamId).filter(Boolean) as string[],
+  const linearProjectIds = useMemo(
+    () => projects.map((p) => p.linearProjectId).filter(Boolean) as string[],
     [projects]
   );
-  const { stateByProjectId } = useLinearProjectStates(teamIds, isAuthenticated);
+  const { stateByProjectId, isFetched: statesFetched } = useLinearProjectStates(
+    linearProjectIds,
+    isAuthenticated
+  );
 
   const { activeProjects, shippedProjects } = useMemo(() => {
     const active: Project[] = [];
@@ -100,6 +103,15 @@ export default function ProjectsPage() {
                 Create Hillchart
               </Button>
             </CreateProjectDialog>
+          </div>
+        ) : !statesFetched ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <div
+                key={project.id}
+                className="h-[180px] rounded-xl border border-border/50 bg-card/40 animate-pulse"
+              />
+            ))}
           </div>
         ) : (
           <div className="space-y-12">

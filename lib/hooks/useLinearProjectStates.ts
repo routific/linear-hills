@@ -1,44 +1,51 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import {
-  fetchLinearProjects,
-  linearProjectsQueryKey,
-} from "./useLinearProjects";
+import { getLinearClient } from "../linear/client";
 
 /**
- * Fetches Linear project states (e.g. "completed", "started") for the given team IDs
- * by reusing the same query cache as `useLinearProjects`. Returns a map from
- * Linear project ID to the project's state string.
+ * Fetches Linear project states (e.g. "completed", "started") for the given
+ * Linear project IDs in a single workspace-wide query, including archived
+ * projects. Returns a map from Linear project ID to the project's state.
+ *
+ * Querying by ID instead of by team avoids missing projects whose team
+ * association has changed and works regardless of how many teams are involved.
  */
-export function useLinearProjectStates(teamIds: string[], enabled: boolean = true) {
-  const uniqueTeamIds = useMemo(
-    () => Array.from(new Set(teamIds.filter(Boolean))),
-    [teamIds]
+export function useLinearProjectStates(
+  linearProjectIds: string[],
+  enabled: boolean = true
+) {
+  const ids = useMemo(
+    () => Array.from(new Set(linearProjectIds.filter(Boolean))).sort(),
+    [linearProjectIds]
   );
 
-  const queries = useQueries({
-    queries: uniqueTeamIds.map((teamId) => ({
-      queryKey: linearProjectsQueryKey(teamId),
-      queryFn: () => fetchLinearProjects(teamId),
-      enabled,
-      staleTime: 5 * 60 * 1000,
-    })),
-  });
-
-  const stateByProjectId = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const query of queries) {
-      const projects = query.data;
-      if (!projects) continue;
-      for (const project of projects) {
+  const query = useQuery({
+    queryKey: ["linear-project-states", ids],
+    queryFn: async (): Promise<Record<string, string>> => {
+      if (ids.length === 0) return {};
+      const client = await getLinearClient();
+      const projectNodes = await client.paginate(
+        (vars) =>
+          client.projects({
+            ...vars,
+            filter: { id: { in: ids } },
+            includeArchived: true,
+          }),
+        { first: 100 }
+      );
+      const map: Record<string, string> = {};
+      for (const project of projectNodes) {
         map[project.id] = project.state;
       }
-    }
-    return map;
-  }, [queries]);
+      return map;
+    },
+    enabled: enabled && ids.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const isLoading = queries.some((q) => q.isLoading);
-  const isFetched = queries.length > 0 && queries.every((q) => q.isFetched);
-
-  return { stateByProjectId, isLoading, isFetched };
+  return {
+    stateByProjectId: query.data ?? {},
+    isLoading: query.isLoading,
+    isFetched: query.isFetched || ids.length === 0,
+  };
 }

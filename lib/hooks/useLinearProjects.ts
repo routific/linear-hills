@@ -9,30 +9,27 @@ export interface LinearProject {
   state: string;
 }
 
-export function linearProjectsQueryKey(teamId: string) {
-  return ["linear-projects", teamId] as const;
-}
-
-export async function fetchLinearProjects(teamId: string): Promise<LinearProject[]> {
-  if (!teamId) return [];
-
-  const client = await getLinearClient();
-  const team = await client.team(teamId);
-  const projectsConnection = await team.projects();
-
-  return projectsConnection.nodes.map((project) => ({
-    id: project.id,
-    name: project.name,
-    key: project.id,
-    url: project.url,
-    state: project.state,
-  }));
-}
-
 export function useLinearProjects(teamId: string, enabled: boolean = true) {
   return useQuery({
-    queryKey: linearProjectsQueryKey(teamId),
-    queryFn: () => fetchLinearProjects(teamId),
+    queryKey: ["linear-projects", teamId],
+    queryFn: async (): Promise<LinearProject[]> => {
+      if (!teamId) return [];
+
+      const client = await getLinearClient();
+      const team = await client.team(teamId);
+      const projectNodes = await client.paginate(
+        (vars) => team.projects(vars),
+        { first: 100 }
+      );
+
+      return projectNodes.map((project) => ({
+        id: project.id,
+        name: project.name,
+        key: project.id,
+        url: project.url,
+        state: project.state,
+      }));
+    },
     enabled: enabled && !!teamId,
     staleTime: 5 * 60 * 1000,
   });
