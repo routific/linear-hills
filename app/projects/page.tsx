@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
+import { SettingsDialog } from "@/components/projects/SettingsDialog";
 import { useAppStore } from "@/lib/store/appStore";
 import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
 import { useLinearProjectStates } from "@/lib/hooks/useLinearProjectStates";
@@ -70,9 +71,21 @@ export default function ProjectsPage() {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
             Linear Hill Charts
           </h1>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="border-border/50">
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <SettingsDialog>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-border/50"
+                aria-label="Workspace settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </SettingsDialog>
+            <Button variant="outline" size="sm" onClick={handleLogout} className="border-border/50">
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 

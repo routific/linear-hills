@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
   Dialog,
@@ -28,6 +28,7 @@ import { useLinearLabels } from "@/lib/hooks/useLinearLabels";
 import { useAppStore } from "@/lib/store/appStore";
 import { useCreateProject } from "@/lib/hooks/mutations/useProjectMutations";
 import { getLinearClient } from "@/lib/linear/client";
+import { SettingsDialog } from "./SettingsDialog";
 import type { Project } from "@/types";
 
 interface CreateProjectDialogProps {
@@ -40,7 +41,23 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
   const [description, setDescription] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [labelFilter, setLabelFilter] = useState("");
+
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const addProjectStore = useAppStore((state) => state.addProject);
+  const defaultLabelFilter = useAppStore(
+    (state) => state.workspaceSettings.defaultLabelFilter
+  );
+  const createProjectMutation = useCreateProject();
+
+  const [labelFilter, setLabelFilter] = useState(defaultLabelFilter);
+
+  // Keep labelFilter in sync with workspace default when it changes (e.g. via
+  // SettingsDialog) and the user hasn't overridden it for this hillchart.
+  useEffect(() => {
+    if (open) {
+      setLabelFilter(defaultLabelFilter);
+    }
+  }, [open, defaultLabelFilter]);
 
   const { data: teams, isLoading: isLoadingTeams } = useLinearTeams(open);
   const { data: projects, isLoading: isLoadingProjects } = useLinearProjects(
@@ -52,10 +69,6 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
     open && !!selectedTeamId
   );
 
-  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
-  const addProjectStore = useAppStore((state) => state.addProject);
-  const createProjectMutation = useCreateProject();
-
   const projectOptions: ComboboxOption[] = useMemo(
     () =>
       projects?.map((p) => ({
@@ -65,8 +78,8 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
     [projects]
   );
 
-  const labelOptions: ComboboxOption[] = useMemo(
-    () =>
+  const labelOptions: ComboboxOption[] = useMemo(() => {
+    const opts: ComboboxOption[] =
       labels?.map((l) => ({
         value: l.name,
         label: l.name,
@@ -77,18 +90,23 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
             style={{ backgroundColor: l.color }}
           />
         ),
-      })) ?? [],
-    [labels]
-  );
+      })) ?? [];
+    // Ensure the current value (e.g., the workspace default) is selectable
+    // even if it doesn't appear in this team's label set.
+    if (labelFilter && !opts.some((o) => o.value === labelFilter)) {
+      opts.unshift({ value: labelFilter, label: labelFilter });
+    }
+    return opts;
+  }, [labels, labelFilter]);
 
   const handleCreate = () => {
-    if (!name.trim() || !selectedTeamId || !selectedProjectId || !labelFilter.trim()) {
+    const trimmedLabel = labelFilter.trim();
+    if (!name.trim() || !selectedTeamId || !selectedProjectId || !trimmedLabel) {
       return;
     }
 
     const team = teams?.find((t) => t.id === selectedTeamId);
     const linearProject = projects?.find((p) => p.id === selectedProjectId);
-    const label = labels?.find((l) => l.name === labelFilter);
 
     const project: Project = {
       id: uuidv4(),
@@ -98,7 +116,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
       linearTeamName: team?.name,
       linearProjectId: selectedProjectId,
       linearProjectName: linearProject?.name,
-      labelFilter: label?.name || labelFilter.trim(),
+      labelFilter: trimmedLabel,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -128,11 +146,12 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
     setDescription("");
     setSelectedTeamId("");
     setSelectedProjectId("");
-    setLabelFilter("");
+    setLabelFilter(defaultLabelFilter);
     setOpen(false);
   };
 
-  const isValid = name.trim() && selectedTeamId && selectedProjectId && labelFilter.trim();
+  const isValid =
+    name.trim() && selectedTeamId && selectedProjectId && labelFilter.trim();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -173,7 +192,6 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
               onValueChange={(value) => {
                 setSelectedTeamId(value);
                 setSelectedProjectId(""); // Reset project when team changes
-                setLabelFilter(""); // Reset label when team changes
               }}
             >
               <SelectTrigger id="team">
@@ -219,7 +237,17 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="label">Label Filter</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="label">Label filter</Label>
+              <SettingsDialog>
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline whitespace-nowrap"
+                >
+                  Change default in Settings
+                </button>
+              </SettingsDialog>
+            </div>
             <Combobox
               id="label"
               options={labelOptions}
@@ -227,13 +255,17 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
               onValueChange={setLabelFilter}
               placeholder="Select a label"
               searchPlaceholder="Search labels..."
-              emptyMessage="No labels found"
+              emptyMessage={
+                selectedTeamId
+                  ? "No labels found"
+                  : "Pick a team above to load more labels"
+              }
               loadingMessage="Loading labels..."
               isLoading={isLoadingLabels}
-              disabled={!selectedTeamId}
             />
             <p className="text-xs text-muted-foreground">
-              Only issues with this label will appear on the hill chart
+              Defaults to the workspace label ({defaultLabelFilter}). Override
+              for this hillchart by picking another.
             </p>
           </div>
         </div>
