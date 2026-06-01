@@ -36,7 +36,18 @@ export const STORAGE_KEYS = {
   ISSUE_POSITIONS: "issue_positions",
   PARKING_LOT_ORDER: "parking_lot_order",
   LAST_SYNC: "last_sync",
+  WORKSPACE_SETTINGS: "workspace_settings",
 } as const;
+
+export const WorkspaceSettingsSchema = z.object({
+  defaultLabelFilter: z.string().min(1),
+});
+
+export type WorkspaceSettings = z.infer<typeof WorkspaceSettingsSchema>;
+
+export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
+  defaultLabelFilter: "Slice",
+};
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 

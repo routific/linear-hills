@@ -18,6 +18,14 @@ import {
   deleteOrdersByProject,
 } from "../storage/parkingLotOrder";
 import { clearAppStorage } from "../storage/schemas";
+import {
+  getWorkspaceSettings,
+  setWorkspaceSettings,
+} from "../storage/workspaceSettings";
+import {
+  DEFAULT_WORKSPACE_SETTINGS,
+  type WorkspaceSettings,
+} from "../storage/schemas";
 
 interface AppState {
   isAuthenticated: boolean;
@@ -25,6 +33,7 @@ interface AppState {
   activeProjectId: string | null;
   issuePositions: Record<string, IssuePosition>;
   parkingLotOrders: Record<string, ParkingLotOrder>;
+  workspaceSettings: WorkspaceSettings;
   isSyncing: boolean;
   lastSync: string | null;
 
@@ -43,6 +52,9 @@ interface AppState {
     issueIds: string[]
   ) => void;
 
+  setWorkspaceSettings: (settings: WorkspaceSettings) => void;
+  updateDefaultLabelFilter: (label: string) => Promise<void>;
+
   setSyncing: (syncing: boolean) => void;
   setLastSync: (timestamp: string) => void;
 
@@ -55,6 +67,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeProjectId: null,
   issuePositions: {},
   parkingLotOrders: {},
+  workspaceSettings: DEFAULT_WORKSPACE_SETTINGS,
   isSyncing: false,
   lastSync: null,
 
@@ -152,6 +165,41 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  setWorkspaceSettings: (settings: WorkspaceSettings) => {
+    set({ workspaceSettings: settings });
+  },
+
+  updateDefaultLabelFilter: async (label: string) => {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+
+    const { isAuthenticated, projects } = get();
+    const next: WorkspaceSettings = { defaultLabelFilter: trimmed };
+
+    if (isAuthenticated) {
+      const response = await fetch("/api/workspace/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update workspace settings");
+      }
+      const data = await response.json();
+      set({
+        workspaceSettings: { defaultLabelFilter: data.defaultLabelFilter },
+        // Backfill projects in store so UI updates immediately
+        projects: projects.map((p) => ({
+          ...p,
+          labelFilter: data.defaultLabelFilter,
+        })),
+      });
+    } else {
+      setWorkspaceSettings(next);
+      set({ workspaceSettings: next });
+    }
+  },
+
   setSyncing: (syncing: boolean) => {
     set({ isSyncing: syncing });
   },
@@ -199,6 +247,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         projects,
         issuePositions: positionsRecord,
         parkingLotOrders: ordersRecord,
+        workspaceSettings: getWorkspaceSettings(),
       });
       return;
     }
@@ -252,6 +301,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           projects: data.projects,
           issuePositions: data.issuePositions,
           parkingLotOrders: data.parkingLotOrders,
+          workspaceSettings: data.workspaceSettings ?? DEFAULT_WORKSPACE_SETTINGS,
           lastSync: data.lastSync,
         });
       } else {

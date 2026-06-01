@@ -101,6 +101,9 @@ export async function GET() {
       projects: projectsFormatted,
       issuePositions: issuePositionsRecord,
       parkingLotOrders: parkingLotOrdersRecord,
+      workspaceSettings: {
+        defaultLabelFilter: workspace.defaultLabelFilter,
+      },
       lastSync: new Date().toISOString(),
     });
   } catch (error) {

@@ -26,6 +26,7 @@ import { useLinearProjects } from "@/lib/hooks/useLinearProjects";
 import { useLinearLabels } from "@/lib/hooks/useLinearLabels";
 import { useAppStore } from "@/lib/store/appStore";
 import { useUpdateProject } from "@/lib/hooks/mutations/useProjectMutations";
+import { SettingsDialog } from "./SettingsDialog";
 import type { Project } from "@/types";
 
 interface EditProjectDialogProps {
@@ -41,6 +42,13 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
   const [selectedProjectId, setSelectedProjectId] = useState(project.linearProjectId || "");
   const [labelFilter, setLabelFilter] = useState(project.labelFilter);
 
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const updateProjectStore = useAppStore((state) => state.updateProject);
+  const defaultLabelFilter = useAppStore(
+    (state) => state.workspaceSettings.defaultLabelFilter
+  );
+  const updateProjectMutation = useUpdateProject();
+
   const { data: teams, isLoading: isLoadingTeams } = useLinearTeams(open);
   const { data: projects, isLoading: isLoadingProjects } = useLinearProjects(
     selectedTeamId,
@@ -51,10 +59,6 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
     open && !!selectedTeamId
   );
 
-  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
-  const updateProjectStore = useAppStore((state) => state.updateProject);
-  const updateProjectMutation = useUpdateProject();
-
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
@@ -62,9 +66,9 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
       setDescription(project.description || "");
       setSelectedTeamId(project.linearTeamId);
       setSelectedProjectId(project.linearProjectId || "");
-      setLabelFilter(project.labelFilter);
+      setLabelFilter(project.labelFilter || defaultLabelFilter);
     }
-  }, [open, project]);
+  }, [open, project, defaultLabelFilter]);
 
   const projectOptions: ComboboxOption[] = useMemo(
     () =>
@@ -75,8 +79,8 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
     [projects]
   );
 
-  const labelOptions: ComboboxOption[] = useMemo(
-    () =>
+  const labelOptions: ComboboxOption[] = useMemo(() => {
+    const opts: ComboboxOption[] =
       labels?.map((l) => ({
         value: l.name,
         label: l.name,
@@ -87,18 +91,21 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
             style={{ backgroundColor: l.color }}
           />
         ),
-      })) ?? [],
-    [labels]
-  );
+      })) ?? [];
+    if (labelFilter && !opts.some((o) => o.value === labelFilter)) {
+      opts.unshift({ value: labelFilter, label: labelFilter });
+    }
+    return opts;
+  }, [labels, labelFilter]);
 
   const handleSave = () => {
-    if (!name.trim() || !selectedTeamId || !selectedProjectId || !labelFilter.trim()) {
+    const trimmedLabel = labelFilter.trim();
+    if (!name.trim() || !selectedTeamId || !selectedProjectId || !trimmedLabel) {
       return;
     }
 
     const team = teams?.find((t) => t.id === selectedTeamId);
     const linearProject = projects?.find((p) => p.id === selectedProjectId);
-    const label = labels?.find((l) => l.name === labelFilter);
 
     const updates = {
       name: name.trim(),
@@ -107,7 +114,7 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
       linearTeamName: team?.name,
       linearProjectId: selectedProjectId,
       linearProjectName: linearProject?.name,
-      labelFilter: label?.name || labelFilter.trim(),
+      labelFilter: trimmedLabel,
       updatedAt: new Date().toISOString(),
     };
 
@@ -121,7 +128,8 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
     setOpen(false);
   };
 
-  const isValid = name.trim() && selectedTeamId && selectedProjectId && labelFilter.trim();
+  const isValid =
+    name.trim() && selectedTeamId && selectedProjectId && labelFilter.trim();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -167,7 +175,6 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
               onValueChange={(value) => {
                 setSelectedTeamId(value);
                 setSelectedProjectId(""); // Reset project when team changes
-                setLabelFilter(""); // Reset label when team changes
               }}
             >
               <SelectTrigger id="edit-team">
@@ -213,7 +220,17 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="edit-label">Label Filter</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="edit-label">Label filter</Label>
+              <SettingsDialog>
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline whitespace-nowrap"
+                >
+                  Change default in Settings
+                </button>
+              </SettingsDialog>
+            </div>
             <Combobox
               id="edit-label"
               options={labelOptions}
@@ -221,13 +238,17 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
               onValueChange={setLabelFilter}
               placeholder="Select a label"
               searchPlaceholder="Search labels..."
-              emptyMessage="No labels found"
+              emptyMessage={
+                selectedTeamId
+                  ? "No labels found"
+                  : "Pick a team above to load more labels"
+              }
               loadingMessage="Loading labels..."
               isLoading={isLoadingLabels}
-              disabled={!selectedTeamId}
             />
             <p className="text-xs text-muted-foreground">
-              Only issues with this label will appear on the hill chart
+              Defaults to the workspace label ({defaultLabelFilter}). Override
+              for this hillchart by picking another.
             </p>
           </div>
         </div>
